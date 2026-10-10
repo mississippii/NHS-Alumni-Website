@@ -1,1 +1,13 @@
-.idea
+# Editor / tool folders
+.idea/
+.vscode/
+.claude/
+*.iml
+
+# Build output
+target/
+dist/
+node_modules/
+
+# Profile photos uploaded on the server: user data, not code
+NHS-Backend/uploads/

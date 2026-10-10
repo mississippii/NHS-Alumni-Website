@@ -90,6 +90,7 @@ class AlumniApiTests {
 
         AlumniController.Card c = api.search("salma", 0, 0, null, null, null, "", false, "name", 1, 24).items().getFirst();
         assertEquals("Salma Akter", c.name());
+        assertEquals(1403001L, (long) c.id()); // student ID: batch 14, Science 03, first in that group
         assertFalse(c.joined());
         // found by SSC roll (exact), never by a fragment of one, nor by Reg No
         assertEquals(c.id(), api.search("165441", 0, 0, null, null, null, "", false, "id", 1, 24).items().getFirst().id());
@@ -278,6 +279,7 @@ class AlumniApiTests {
         var jj = j;
         assertThrows(err, () -> form.join(jj, junk)); // bad photo: rejected before the PIN is used
         long newId = (Long) form.join(j, new org.springframework.mock.web.MockMultipartFile("photo", "me.png", "image/png", png.toByteArray())).get("id");
+        assertEquals(8503001L, newId); // the first 1985 Science student
         assertTrue(repo.findById(newId).orElseThrow().getPhotoUrl().startsWith("/api/photos/" + newId + ".jpg"));
         assertEquals(1985, api.profile(newId).card().batch());
         assertTrue(api.profile(newId).card().joined());

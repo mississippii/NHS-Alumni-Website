@@ -5,12 +5,10 @@ spring:
     # Runs as the server (10.10.10.16:8100 + Eureka, see application-prod.yaml) unless told otherwise.
     # On another computer: --spring.profiles.active=local  (127.0.0.1:8081, no Eureka)
     default: prod
-  config:
-    import: optional:file:./local.yaml   # DB login + admin token for this machine
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/NHS_Alumni}
-    username: veer
-    password: 1234
+    username: ${DB_USER:veer}
+    password: ${DB_PASSWORD:Takay1#$ane}
   jpa:
     # ponytail: Hibernate manages the schema; move to Flyway migrations once it stops changing.
     hibernate:
@@ -30,8 +28,8 @@ server:
   address: ${BIND_ADDRESS:127.0.0.1}
 
 nhs:
-  # Required for /api/admin/**. Empty = admin endpoints refuse every request.
-  admin-token: ${ADMIN_TOKEN:}
+  # Required for /api/admin/** (X-Admin-Token header). Empty = admin endpoints refuse every request.
+  admin-token: ${ADMIN_TOKEN:92f098853119eeb612bff8611aa3a700}
 
 # Local runs don't use Eureka; the prod profile (application-prod.yaml) turns it on.
 eureka:

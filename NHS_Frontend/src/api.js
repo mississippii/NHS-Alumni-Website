@@ -4,6 +4,8 @@ export const SCHOOL = { short: 'NHS', name: 'Nimsar High School', est: null, cit
 export const THIS_YEAR = new Date().getFullYear();
 export const isJubilee = y => [10, 25, 40, 50].includes(THIS_YEAR - y);
 export const fullName = p => p.name;
+// Student ID YYDDSSS (batch, department, serial). Stored as a number, so batch 2006 loses its leading zero: put it back.
+export const studentId = id => String(id).padStart(7, '0');
 
 async function get(path, { notFound } = {}) {
   const res = await fetch('/api' + path);

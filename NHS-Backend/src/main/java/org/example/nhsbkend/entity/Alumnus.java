@@ -20,8 +20,8 @@ public class Alumnus {
 
     public enum Status { UNCLAIMED, PENDING, VERIFIED }
 
+    /** Student ID, see {@link org.example.nhsbkend.repository.AlumnusRepository#nextId}. Set once at creation; never changes. */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // --- from the SSC record ---

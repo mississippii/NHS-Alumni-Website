@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { fullName, getAlumnus, SCHOOL } from '../api.js';
+import { fullName, getAlumnus, SCHOOL, studentId } from '../api.js';
 import { Avatar, Empty, Icon, SocialLinks, useAsync, useTitle } from '../components/ui.jsx';
 
 function Timeline({ items, icon }) {
@@ -62,6 +62,7 @@ export default function Profile() {
             <div className="profile-meta">
               <Link to={`/directory?batch=${p.batch}`}><Icon name="cap" />Batch {p.batch}</Link>
               <span><Icon name="layers" />{p.group}</span>
+              <span>ID {studentId(p.id)}</span>
               {p.city && <span><Icon name="pin" />{[p.city, p.country].filter(Boolean).join(', ')}</span>}
               {p.village && <span><Icon name="home" />From {p.village}</span>}
             </div>
@@ -78,7 +79,7 @@ export default function Profile() {
                 <h2 className="card-title">Is this you?</h2>
                 <p className="text-2">Add your photo, contact, work and education so batchmates can find you.</p>
               </div>
-              <Link className="btn btn-primary btn-pulse" to={`/alumni/${p.id}/update`}>Update my profile</Link>
+              <Link className="btn btn-primary btn-pulse" to={`/alumni/${studentId(p.id)}/update`}>Update my profile</Link>
             </section>
           )}
           {p.bio && (
@@ -134,7 +135,7 @@ export default function Profile() {
             <section className="card card-pad">
               <h2 className="card-title">Is this you?</h2>
               <p className="text-2">Keep your details up to date. We’ll email you a PIN to confirm.</p>
-              <Link className="btn btn-secondary btn-block" to={`/alumni/${p.id}/update`}>Edit my profile</Link>
+              <Link className="btn btn-secondary btn-block" to={`/alumni/${studentId(p.id)}/update`}>Edit my profile</Link>
             </section>
           )}
         </aside>

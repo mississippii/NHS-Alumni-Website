@@ -99,7 +99,8 @@ public class ProfileController {
         BufferedImage img = image(photo);
         pins.check(a.getEmail(), f.pin(), true);
         a.setStatus(Alumnus.Status.VERIFIED);
-        repo.save(a);
+        a.setId(repo.nextId(a.getBatch(), a.getDepartment()));
+        a = repo.save(a); // an assigned ID means save() merges: keep working on the managed copy
         if (img != null) a.setPhotoUrl(photos.save(a.getId(), img, 0.5, 0.4, 1));
         return Map.of("id", a.getId(), "status", a.getStatus().name());
     }

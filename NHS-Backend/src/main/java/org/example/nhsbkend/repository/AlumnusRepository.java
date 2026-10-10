@@ -7,9 +7,28 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface AlumnusRepository extends JpaRepository<Alumnus, Long>, JpaSpecificationExecutor<Alumnus> {
+
+    Map<String, Integer> DEPARTMENT_CODES = Map.of("Humanities", 1, "Business Studies", 2, "Science", 3);
+
+    @Query("select max(a.id) from Alumnus a where a.id between :from and :to")
+    Long maxIdBetween(long from, long to);
+
+    /**
+     * The next free student ID, YYDDSSS: last two digits of the SSC year, department code, serial within that batch
+     * and department. 1403005 = batch 2014, Science, 5th student. Batch 2006 gives 06xxxxx, i.e. the number 6xxxxx.
+     * ponytail: two students created at the same instant in one group can pick the same ID (the second save fails);
+     * fine for an admin import and occasional joins, lock the group if sign-ups ever get busy.
+     */
+    default long nextId(int batch, String department) {
+        long base = batch % 100 * 100_000L + DEPARTMENT_CODES.get(department) * 1_000L;
+        Long max = maxIdBetween(base + 1, base + 999);
+        if (max != null && max == base + 999) throw new IllegalStateException("Batch " + batch + " " + department + " already has 999 students.");
+        return max == null ? base + 1 : max + 1;
+    }
 
     Optional<Alumnus> findByBatchAndRoll(int batch, long roll);
 

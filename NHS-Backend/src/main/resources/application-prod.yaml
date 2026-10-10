@@ -1,7 +1,7 @@
 # Server at 10.10.10.16 (the default profile). Start with: java -jar NHS-Bkend-0.0.1-SNAPSHOT.jar
 server:
   address: 10.10.10.16
-  port: 8100
+  port: 8081
 
 eureka:
   instance:
@@ -14,3 +14,14 @@ eureka:
     fetch-registry: false   # nothing here calls other services
     service-url:
       defaultZone: ${EUREKA_URL:http://admin:admin@10.10.10.16:8761/eureka}
+
+# PIN emails (Gmail app password). Only on the server: local runs and tests write PINs to the log instead.
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: nhs.alumnus@gmail.com
+    password: ${MAIL_PASSWORD:dmgvlveovjymtmas}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true

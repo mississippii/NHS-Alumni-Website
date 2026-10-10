@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { SCHOOL, THIS_YEAR, fullName, isJubilee } from '../api.js';
+import { SCHOOL, THIS_YEAR, fullName, isJubilee, studentId } from '../api.js';
 
 /* ---------- icons (24px stroke set) ---------- */
 const PATHS = {
@@ -156,7 +156,7 @@ export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 export function PersonRow({ person: p }) {
   return (
-    <Link className="person" to={`/alumni/${p.id}`}>
+    <Link className="person" to={`/alumni/${studentId(p.id)}`}>
       <Avatar person={p} />
       <div className="person-main">
         <div className="person-name"><span>{fullName(p)}</span>{p.joined && <Icon name="verified" />}</div>
@@ -195,7 +195,7 @@ export function PeopleList({ people, loading, head = true }) {
 /** Batch roster card: photo on the top half, then name, then where they work or study. */
 export function StudentCard({ person: p }) {
   return (
-    <Link className="card card-link student" to={`/alumni/${p.id}`}>
+    <Link className="card card-link student" to={`/alumni/${studentId(p.id)}`}>
       <span className="student-photo" aria-hidden="true">
         {p.photo ? <img src={p.photo} alt="" loading="lazy" /> : <span>{initials(p.name)}</span>}
       </span>
@@ -230,7 +230,7 @@ export function BatchSummary({ batch: b }) {
 
 export function ProfileCard({ person: p }) {
   return (
-    <Link className="card card-link profile-card" to={`/alumni/${p.id}`}>
+    <Link className="card card-link profile-card" to={`/alumni/${studentId(p.id)}`}>
       <Avatar person={p} size="lg" />
       <div>
         <b>{fullName(p)}</b>

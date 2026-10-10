@@ -77,6 +77,7 @@ public class BatchImporter {
             if (withVillage != null) a.setVillage(withVillage.village());
             Long reg = c.reversed().stream().map(Rec::regNo).filter(Objects::nonNull).findFirst().orElse(null);
             if (reg != null) a.setRegNo(reg);
+            if (a.getId() == null) a.setId(people.nextId(a.getBatch(), a.getDepartment()));
             people.save(a);
         }
         return new Result(students, created, updated, multi, ignored, skipped, notes);

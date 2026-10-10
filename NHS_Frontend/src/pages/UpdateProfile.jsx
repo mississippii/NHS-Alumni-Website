@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getAlumnusRaw, requestPin, saveProfile, SCHOOL, THIS_YEAR } from '../api.js';
+import { getAlumnusRaw, requestPin, saveProfile, SCHOOL, studentId, THIS_YEAR } from '../api.js';
 import { Avatar, Empty, GROUPS, Icon, SOCIAL, useAsync, useTitle } from '../components/ui.jsx';
 
 const FOUNDED = 1958;
@@ -109,7 +109,7 @@ function ProfileFormPage({ id, person, start }) {
   if (done) return (
     <div className="wrap section"><div className="card">
       <Empty icon="verified" title={person ? 'Your profile is updated' : 'Welcome to the network!'}
-        action={<Link className="btn btn-primary" to={`/alumni/${id || done.id}`}>View my profile</Link>}>
+        action={<Link className="btn btn-primary" to={`/alumni/${studentId(id || done.id)}`}>View my profile</Link>}>
         Batchmates can see your details now. To change them later, open your profile and tap “Edit my profile”.
       </Empty>
     </div></div>
@@ -122,7 +122,7 @@ function ProfileFormPage({ id, person, start }) {
           <nav className="breadcrumb" aria-label="Breadcrumb">
             {person ? <>
               <Link to={`/directory?batch=${person.batch}`}>Batch {person.batch}</Link><Icon name="chevron" />
-              <Link to={`/alumni/${id}`}>{person.name}</Link>
+              <Link to={`/alumni/${studentId(id)}`}>{person.name}</Link>
             </> : <><Link to="/">Home</Link><Icon name="chevron" /><span aria-current="page">Join</span></>}
           </nav>
           <h1 className="page-title">{person ? 'Update my profile' : 'Join the network'}</h1>

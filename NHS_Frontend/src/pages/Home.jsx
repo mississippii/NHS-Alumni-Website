@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { fullName, getStats, listAlumni, listBatches, listEvents, SCHOOL } from '../api.js';
+import { fullName, getStats, listAlumni, listBatches, listEvents, SCHOOL, studentId } from '../api.js';
 import {
   Avatar, BatchCard, GROUPS, Icon, ProfileCard, SectionHead, groupShort, useAsync, useTitle,
 } from '../components/ui.jsx';
@@ -52,7 +52,7 @@ function HeroSearch() {
         <div className="suggest" id="hero-suggest" aria-live="polite">
           {hits.items.length === 0 && <p>No alumni match “{q.trim()}”.</p>}
           {hits.items.map(p => (
-            <Link key={p.id} to={`/alumni/${p.id}`}>
+            <Link key={p.id} to={`/alumni/${studentId(p.id)}`}>
               <Avatar person={p} size="sm" />
               <span><b>{fullName(p)}</b><small>Batch {p.batch} · {groupShort(p.group)}</small></span>
             </Link>
