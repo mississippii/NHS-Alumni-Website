@@ -1,0 +1,15 @@
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/NhsBkendApplication.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/controller/AdminController.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/controller/AlumniController.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/controller/ProfileController.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/entity/Alumnus.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/entity/Education.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/entity/Event.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/entity/Job.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/entity/SocialLink.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/repository/AlumnusRepository.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/repository/EventRepository.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/service/BatchImporter.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/service/PhotoService.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/service/PinService.java
+/home/veer/Development/Java/NHS-Bkend/NHS-Backend/src/main/java/org/example/nhsbkend/service/Socials.java

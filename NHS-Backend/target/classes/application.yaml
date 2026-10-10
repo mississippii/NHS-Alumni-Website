@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: NHS-Bkend
+  profiles:
+    # Runs as the server (10.10.10.16:8100 + Eureka, see application-prod.yaml) unless told otherwise.
+    # On another computer: --spring.profiles.active=local  (127.0.0.1:8081, no Eureka)
+    default: prod
+  config:
+    import: optional:file:./local.yaml   # DB login + admin token for this machine
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/NHS_Alumni}
+    username: veer
+    password: 1234
+  jpa:
+    # ponytail: Hibernate manages the schema; move to Flyway migrations once it stops changing.
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  web:
+    error:
+      include-message: always   # so a rejected upload says why
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+server:
+  port: ${PORT:8081}   # 8080 is taken by nginx on this machine
+  # Only this computer can reach the API; phones go through the website (Vite forwards /api).
+  address: ${BIND_ADDRESS:127.0.0.1}
+
+nhs:
+  # Required for /api/admin/**. Empty = admin endpoints refuse every request.
+  admin-token: ${ADMIN_TOKEN:}
+
+# Local runs don't use Eureka; the prod profile (application-prod.yaml) turns it on.
+eureka:
+  client:
+    enabled: ${EUREKA_ENABLED:false}

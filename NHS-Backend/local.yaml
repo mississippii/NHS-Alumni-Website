@@ -1,0 +1,17 @@
+# Machine-specific secrets. Not committed (see .gitignore).
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/NHS_Alumni
+    username: nhs_app
+    password: "s1FVut1U4jOubXiof5VhB2McNh#7"
+  # PIN emails (Gmail app password). Comment out "host" to write PINs to the log instead.
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: nhs.alumnus@gmail.com
+    password: "dmgvlveovjymtmas"
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+nhs:
+  admin-token: 92f098853119eeb612bff8611aa3a700

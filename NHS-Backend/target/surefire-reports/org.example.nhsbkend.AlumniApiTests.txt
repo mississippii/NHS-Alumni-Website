@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: org.example.nhsbkend.AlumniApiTests
+-------------------------------------------------------------------------------
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 31.79 s -- in org.example.nhsbkend.AlumniApiTests
