@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getAlumnusRaw, requestPin, saveProfile, SCHOOL, studentId, THIS_YEAR } from '../api.js';
+import { getAlumnusRaw, getStats, requestPin, saveProfile, SCHOOL, studentId } from '../api.js';
 import { Avatar, Empty, GROUPS, Icon, SOCIAL, useAsync, useTitle } from '../components/ui.jsx';
 
 const FOUNDED = 1958;
@@ -13,21 +13,21 @@ const blankEdu = level => ({ level, institution: '' });
 // older rows were saved as HSC / Bachelor's / …
 const eduType = level => (!level || /hsc|college/i.test(level) ? 'College' : 'University');
 
-function Field({ label, hint, children, wide }) {
+function Field({ label, hint, children, wide, required }) {
   return (
     <label className={`field${wide ? ' wide' : ''}`}>
-      <span className="field-label">{label}{hint && <small>{hint}</small>}</span>
+      <span className="field-label"><span>{label}{required && <span className="req" aria-hidden="true"> *</span>}</span>{hint && <small>{hint}</small>}</span>
       {children}
     </label>
   );
 }
 
-/** The form's starting values: what the profile already shows publicly (hidden phone/email must be typed again). */
+/** The form's starting values: what the profile already shows publicly, including the saved email (hidden phone/email must be typed again). */
 function initial(d) {
   const c = d?.card || {};
   return {
     form: {
-      name: '', batch: '', group: '', email: '', phone: d?.contact?.phone || '', bloodGroup: d?.contact?.bloodGroup || '',
+      name: '', batch: '', group: '', village: '', email: d?.contact?.email || '', phone: d?.contact?.phone || '', bloodGroup: d?.contact?.bloodGroup || '',
       title: c.title || '', org: c.org || '', industry: c.industry || '', city: c.city || '', country: c.country || 'Bangladesh',
       bio: d?.bio || '', showPhone: true, showEmail: true,
     },
@@ -70,6 +70,10 @@ function ProfileFormPage({ id, person, start }) {
   const [pinOpen, setPinOpen] = useState(false);
   const [done, setDone] = useState(null);
   const [photo, setPhoto] = useState(null); // { blob, url }
+  // Join is only for batches older than the school's records; anyone in the records updates their existing profile.
+  // The cut-off comes from the school's sheets only, so alumni who already joined (e.g. batch 1992) don't move it.
+  const stats = useAsync(getStats, []);
+  const lastJoin = (stats.data?.firstRecordBatch ?? 2006) - 1;
   useEffect(() => () => photo && URL.revokeObjectURL(photo.url), [photo]);
 
   const pickPhoto = async e => {
@@ -106,6 +110,14 @@ function ProfileFormPage({ id, person, start }) {
     }
   };
 
+  // A join waits for an admin; updates to a listed record go live at once.
+  if (done?.status === 'PENDING') return (
+    <div className="wrap section"><div className="card">
+      <Empty icon="inbox" title="Request sent" action={<Link className="btn btn-primary" to="/">Back to home</Link>}>
+        Thank you! An admin will check your details. Your profile appears in the directory once it’s approved.
+      </Empty>
+    </div></div>
+  );
   if (done) return (
     <div className="wrap section"><div className="card">
       <Empty icon="verified" title={person ? 'Your profile is updated' : 'Welcome to the network!'}
@@ -118,7 +130,7 @@ function ProfileFormPage({ id, person, start }) {
   return (
     <>
       <header className="page-header">
-        <div className="wrap">
+        <div className="wrap form-head">
           <nav className="breadcrumb" aria-label="Breadcrumb">
             {person ? <>
               <Link to={`/directory?batch=${person.batch}`}>Batch {person.batch}</Link><Icon name="chevron" />
@@ -128,147 +140,145 @@ function ProfileFormPage({ id, person, start }) {
           <h1 className="page-title">{person ? 'Update my profile' : 'Join the network'}</h1>
           <p className="page-desc">
             {person ? `${person.name} · Batch ${person.batch} · ${person.group}`
-              : `For ${SCHOOL.name} alumni who can’t find themselves in the directory, including every batch since ${FOUNDED}.`}
+              : <>For {SCHOOL.name} batches {FOUNDED}–{lastJoin}. From {lastJoin + 1} on you’re already listed: <Link className="link" to="/directory">find yourself</Link> and update your profile. An admin approves each request.</>}
           </p>
         </div>
       </header>
 
       <form className="wrap form" onSubmit={submit}>
-        <section className="card card-pad form-card">
-          <h2 className="card-title">Photo</h2>
-          <div className="photo-pick">
-            <Avatar person={{ name: person?.name || f.name || '?', photo: photo?.url || person?.photo }} size="xl" />
-            <label className="btn btn-secondary btn-sm">
-              <input type="file" accept="image/*" className="sr-only" onChange={pickPhoto} />
-              {photo || person?.photo ? 'Change photo' : 'Add photo'}
-            </label>
-            {photo && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPhoto(null)}>Remove</button>}
+        <section className="card card-pad form-card form-one">
+          <div className="form-part">
+            <div className="photo-pick">
+              <Avatar person={{ name: person?.name || f.name || '?', photo: photo?.url || person?.photo }} size="xl" />
+              <label className="btn btn-secondary btn-sm">
+                <input type="file" accept="image/*" className="sr-only" onChange={pickPhoto} />
+                {photo || person?.photo ? 'Change photo' : 'Add photo'}
+              </label>
+              {photo && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPhoto(null)}>Remove</button>}
+            </div>
           </div>
-        </section>
 
-        {person && (
-          <section className="card card-pad form-card">
-            <h2 className="card-title">School record</h2>
-            <dl className="facts">
-              <div><dt>Name</dt><dd>{person.name}</dd></div>
-              <div><dt>Batch</dt><dd className="num">{person.batch}</dd></div>
-              <div><dt>Group</dt><dd>{person.group}</dd></div>
-            </dl>
-            <p className="form-note">From the school’s SSC records. Something wrong? Contact the alumni admin.</p>
-          </section>
-        )}
+          {person && (
+            <div className="form-part">
+              {/* from the school's SSC records: shown locked, the server never changes them on update */}
+              <div className="form-grid">
+                <Field label="Name" hint="Can’t be changed" wide><input className="input" value={person.name} readOnly disabled /></Field>
+                <Field label="Batch"><input className="input num" value={person.batch} readOnly disabled /></Field>
+                <Field label="Group"><input className="input" value={person.group} readOnly disabled /></Field>
+              </div>
+              <p className="form-note">From the school’s SSC records. Something wrong? Contact the alumni admin.</p>
+            </div>
+          )}
 
-        {!person && (
-          <section className="card card-pad form-card">
-            <h2 className="card-title">Your school days</h2>
+          {!person && (
+            <div className="form-part">
+              <div className="form-grid">
+                <Field label="Full name" wide required>
+                  <input className="input" required minLength={3} maxLength={120} autoComplete="name" value={f.name} onChange={set('name')} />
+                </Field>
+                <Field label="Batch" hint={`SSC year, ${FOUNDED}–${lastJoin}`} required>
+                  <select className="select" required value={f.batch} onChange={set('batch')}>
+                    <option value="" disabled>Choose year</option>
+                    {Array.from({ length: lastJoin - FOUNDED + 1 }, (_, i) => lastJoin - i).map(y => <option key={y}>{y}</option>)}
+                  </select>
+                </Field>
+                <Field label="Group" required>
+                  <select className="select" required value={f.group} onChange={set('group')}>
+                    <option value="" disabled>Choose group</option>
+                    {GROUPS.map(g => <option key={g.name}>{g.name}</option>)}
+                  </select>
+                </Field>
+                <Field label="Village" wide required>
+                  <input className="input" required maxLength={80} autoComplete="address-level3" value={f.village} onChange={set('village')} />
+                </Field>
+              </div>
+            </div>
+          )}
+
+          <div className="form-part">
             <div className="form-grid">
-              <Field label="Full name" wide>
-                <input className="input" required minLength={3} maxLength={120} autoComplete="name" value={f.name} onChange={set('name')} />
+              <Field label="Email" hint={person?.joined ? 'The one saved on your profile' : 'We’ll send a PIN here'} wide required>
+                <input className="input" type="email" required maxLength={120} autoComplete="email" value={f.email} onChange={set('email')} />
               </Field>
-              <Field label="Batch" hint="SSC year, or the year you’ll sit it">
-                <select className="select" required value={f.batch} onChange={set('batch')}>
-                  <option value="" disabled>Choose year</option>
-                  {Array.from({ length: THIS_YEAR + 5 - FOUNDED + 1 }, (_, i) => THIS_YEAR + 5 - i).map(y => <option key={y}>{y}</option>)}
-                </select>
+              <Field label="Phone" required>
+                <input className="input" type="tel" required pattern="\+?[0-9 \-]{6,20}" title="Phone number, e.g. 01711000000" autoComplete="tel" placeholder="01XXXXXXXXX" value={f.phone} onChange={set('phone')} />
               </Field>
-              <Field label="Group">
-                <select className="select" required value={f.group} onChange={set('group')}>
-                  <option value="" disabled>Choose group</option>
-                  {GROUPS.map(g => <option key={g.name}>{g.name}</option>)}
+              <Field label="Blood group">
+                <select className="select" value={f.bloodGroup} onChange={set('bloodGroup')}>
+                  <option value="">Not set</option>
+                  {BLOOD.map(b => <option key={b}>{b}</option>)}
                 </select>
               </Field>
             </div>
-          </section>
-        )}
-
-        <section className="card card-pad form-card">
-          <h2 className="card-title">Contact</h2>
-          <div className="form-grid">
-            <Field label="Email" hint={person?.joined ? 'The one saved on your profile' : 'We’ll send a PIN here'} wide>
-              <input className="input" type="email" required maxLength={120} autoComplete="email" value={f.email} onChange={set('email')} />
-            </Field>
-            <Field label="Phone" hint="Required">
-              <input className="input" type="tel" required pattern="\+?[0-9 \-]{6,20}" title="Phone number, e.g. 01711000000" autoComplete="tel" placeholder="01XXXXXXXXX" value={f.phone} onChange={set('phone')} />
-            </Field>
-            <Field label="Blood group">
-              <select className="select" value={f.bloodGroup} onChange={set('bloodGroup')}>
-                <option value="">Not set</option>
-                {BLOOD.map(b => <option key={b}>{b}</option>)}
-              </select>
-            </Field>
+            <div className="form-switches">
+              <label className="switch-row">
+                <span><b>Show my phone</b></span>
+                <input type="checkbox" role="switch" className="switch" checked={f.showPhone} onChange={set('showPhone')} />
+              </label>
+              <label className="switch-row">
+                <span><b>Show my email</b></span>
+                <input type="checkbox" role="switch" className="switch" checked={f.showEmail} onChange={set('showEmail')} />
+              </label>
+            </div>
           </div>
-          <div className="form-switches">
-            <label className="switch-row">
-              <span><b>Show my phone</b></span>
-              <input type="checkbox" role="switch" className="switch" checked={f.showPhone} onChange={set('showPhone')} />
-            </label>
-            <label className="switch-row">
-              <span><b>Show my email</b></span>
-              <input type="checkbox" role="switch" className="switch" checked={f.showEmail} onChange={set('showEmail')} />
-            </label>
-          </div>
-        </section>
 
-        <section className="card card-pad form-card">
-          <h2 className="card-title">Work &amp; location</h2>
-          <div className="form-grid">
-            <Field label="Occupation"><input className="input" placeholder="e.g. Software Engineer" value={f.title} onChange={set('title')} /></Field>
-            <Field label="Organization"><input className="input" placeholder="Company, office or institute" value={f.org} onChange={set('org')} /></Field>
-            <Field label="Field">
-              <input className="input" list="fields" value={f.industry} onChange={set('industry')} />
-              <datalist id="fields">{FIELDS.map(x => <option key={x} value={x} />)}</datalist>
-            </Field>
-            <Field label="City"><input className="input" autoComplete="address-level2" value={f.city} onChange={set('city')} /></Field>
-            <Field label="Country"><input className="input" autoComplete="country-name" value={f.country} onChange={set('country')} /></Field>
-          </div>
-        </section>
-
-        <section className="card card-pad form-card">
-          <h2 className="card-title">Education after SSC</h2>
-          <ol className="edu-rows">
-            {edu.map((r, i) => (
-              <li key={i} className="edu-row">
-                <Field label="Type">
-                  <select className="select" required value={r.level} onChange={setRow(i, 'level')}>
-                    {EDU_TYPES.map(t => <option key={t}>{t}</option>)}
-                  </select>
-                </Field>
-                <Field label="Institution name">
-                  <input className="input" placeholder={`${r.level} name`} value={r.institution} onChange={setRow(i, 'institution')} />
-                </Field>
-                {edu.length > 1 && (
-                  <button type="button" className="btn btn-ghost edu-remove" onClick={() => setEdu(rows => rows.filter((_, j) => j !== i))} aria-label={`Remove institution ${i + 1}`}>
-                    <Icon name="x" />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ol>
-          {edu.length < 10 && (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEdu(rows => [...rows, blankEdu('University')])}>+ Add another</button>
-          )}
-        </section>
-
-        <section className="card card-pad form-card">
-          <h2 className="card-title">Social links</h2>
-          <div className="form-grid">
-            {Object.entries(SOCIAL).map(([k, s]) => (
-              <Field key={k} label={s.label}>
-                <span className="input-brand">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style={{ color: s.color }}>{s.svg}</svg>
-                  <input className="input" inputMode="url" autoCapitalize="off" spellCheck="false" placeholder={SOCIAL_HINT[k]}
-                    value={socials[k]} onChange={e => setSocials(x => ({ ...x, [k]: e.target.value }))} />
-                </span>
+          <div className="form-part">
+            <div className="form-grid">
+              <Field label="Occupation"><input className="input" placeholder="e.g. Software Engineer" value={f.title} onChange={set('title')} /></Field>
+              <Field label="Organization"><input className="input" placeholder="Company, office or institute" value={f.org} onChange={set('org')} /></Field>
+              <Field label="Field" wide>
+                <input className="input" list="fields" value={f.industry} onChange={set('industry')} />
+                <datalist id="fields">{FIELDS.map(x => <option key={x} value={x} />)}</datalist>
               </Field>
-            ))}
+              <Field label="City"><input className="input" autoComplete="address-level2" value={f.city} onChange={set('city')} /></Field>
+              <Field label="Country"><input className="input" autoComplete="country-name" value={f.country} onChange={set('country')} /></Field>
+            </div>
           </div>
-        </section>
 
-        <section className="card card-pad form-card">
-          <h2 className="card-title">About you</h2>
-          <Field label="A few lines for your batchmates" hint={`${f.bio.length}/2000`}>
-            <textarea className="input textarea" rows="4" maxLength={2000} value={f.bio} onChange={set('bio')} />
-          </Field>
+          <div className="form-part">
+            <ol className="edu-rows">
+              {edu.map((r, i) => (
+                <li key={i} className="edu-row">
+                  <Field label="Type">
+                    <select className="select" required value={r.level} onChange={setRow(i, 'level')}>
+                      {EDU_TYPES.map(t => <option key={t}>{t}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="College / University after SSC">
+                    <input className="input" placeholder={`${r.level} name`} value={r.institution} onChange={setRow(i, 'institution')} />
+                  </Field>
+                  {edu.length > 1 && (
+                    <button type="button" className="btn btn-ghost edu-remove" onClick={() => setEdu(rows => rows.filter((_, j) => j !== i))} aria-label={`Remove institution ${i + 1}`}>
+                      <Icon name="x" />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ol>
+            {edu.length < 10 && (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEdu(rows => [...rows, blankEdu('University')])}>+ Add another</button>
+            )}
+          </div>
+
+          <div className="form-part">
+            <div className="form-grid">
+              {Object.entries(SOCIAL).map(([k, s]) => (
+                <Field key={k} label={s.label}>
+                  <span className="input-brand">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style={{ color: s.color }}>{s.svg}</svg>
+                    <input className="input" inputMode="url" autoCapitalize="off" spellCheck="false" placeholder={SOCIAL_HINT[k]}
+                      value={socials[k]} onChange={e => setSocials(x => ({ ...x, [k]: e.target.value }))} />
+                  </span>
+                </Field>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-part">
+            <Field label="A few lines for your batchmates" hint={`${f.bio.length}/2000`}>
+              <textarea className="input textarea" rows="4" maxLength={2000} value={f.bio} onChange={set('bio')} />
+            </Field>
+          </div>
         </section>
 
         <div className="form-submit">

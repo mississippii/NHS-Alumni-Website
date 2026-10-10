@@ -24,6 +24,7 @@ const PATHS = {
   phone: <path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2" />,
   mail: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>,
   drop: <path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z" />,
+  idcard: <><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="11" r="2" /><path d="M6 16c.5-1.3 1.6-2 3-2s2.5.7 3 2M14 10h4M14 14h3" /></>,
   inbox: <><path d="M3 13h5l1.5 3h5L16 13h5" /><path d="M5 5h14l2 8v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6z" /></>,
 };
 export const Icon = ({ name, className = 'ic' }) => (
@@ -67,6 +68,11 @@ export const GROUPS = [
   { name: 'Business Studies', cls: 'g-business', icon: 'bag' },
   { name: 'Humanities', cls: 'g-humanities', icon: 'book' },
 ];
+/** Initials take their group's colour: "tint t-science" etc., empty when unknown. */
+export const tint = group => {
+  const g = GROUPS.find(x => x.name === group);
+  return g ? `tint t-${g.cls.slice(2)}` : '';
+};
 
 /** Fetch-on-deps hook with loading + error state. */
 export function useAsync(fn, deps) {
@@ -100,7 +106,7 @@ const initials = name => {
 
 export function Avatar({ person, size = '' }) {
   return (
-    <span className={`avatar ${size && `avatar-${size}`}`} aria-hidden="true">
+    <span className={`avatar ${size && `avatar-${size}`} ${person.photo ? '' : tint(person.group)}`} aria-hidden="true">
       {person.photo ? <img src={person.photo} alt="" loading="lazy" /> : initials(person.name)}
     </span>
   );
@@ -196,7 +202,7 @@ export function PeopleList({ people, loading, head = true }) {
 export function StudentCard({ person: p }) {
   return (
     <Link className="card card-link student" to={`/alumni/${studentId(p.id)}`}>
-      <span className="student-photo" aria-hidden="true">
+      <span className={`student-photo ${p.photo ? '' : tint(p.group)}`} aria-hidden="true">
         {p.photo ? <img src={p.photo} alt="" loading="lazy" /> : <span>{initials(p.name)}</span>}
       </span>
       <span className="student-body">

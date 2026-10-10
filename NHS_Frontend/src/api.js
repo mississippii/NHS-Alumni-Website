@@ -34,24 +34,8 @@ export function listAlumni(f) {
 export async function getAlumnus(id) {
   const d = await get(`/alumni/${id}`, { notFound: null });
   if (!d) return null;
-  const { card, education, career, ...rest } = d;
-  const byYear = (a, b) => (b ?? 0) - (a ?? 0);
-  return {
-    ...card, ...rest,
-    // Newest first. Current job (title/org) comes before past jobs; SSC at this school is always the last education row.
-    career: [
-      ...(card.title || card.org ? [{ when: 'Now', title: card.title || card.industry, org: card.org }] : []),
-      ...[...career].sort((a, b) => byYear(a.from, b.from)).map(j => ({
-        when: [j.from, j.to ?? 'now'].filter(Boolean).join(' – '), title: j.title, org: j.org,
-      })),
-    ],
-    education: [
-      ...[...education].sort((a, b) => byYear(a.year, b.year)).map(e => ({
-        when: e.year ? String(e.year) : '', title: e.institution, org: [e.level, e.subject].filter(Boolean).join(', ') || null,
-      })),
-      { when: String(card.batch), title: SCHOOL.name, org: `School · SSC, ${card.group}` },
-    ],
-  };
+  const { card, ...rest } = d;
+  return { ...card, ...rest };
 }
 
 export const listFeatured = () => get('/alumni/featured').then(list => list.map(({ card, ...rest }) => ({ ...card, ...rest })));
@@ -78,3 +62,18 @@ export async function saveProfile(id, form, photo) {
   if (!res.ok) throw new Error((await res.json().catch(() => null))?.message || `Couldn’t save (${res.status}). Try again.`);
   return res.json();
 }
+
+/** Admin calls carry the token from the admin page; a wrong token comes back as status 401. */
+async function admin(path, token, method = 'GET') {
+  const res = await fetch('/api/admin' + path, { method, headers: { 'X-Admin-Token': token } });
+  if (!res.ok) {
+    const msg = (await res.json().catch(() => null))?.message;
+    throw Object.assign(new Error(msg || `Request failed (${res.status})`), { status: res.status });
+  }
+  return method === 'GET' ? res.json() : null;
+}
+export const adminLogin = (email, password) => post('/admin/login', { email, password }).then(r => r.token);
+export const adminLogout = token => admin('/logout', token, 'POST');
+export const listPending = token => admin('/pending', token);
+export const approveJoin = (token, id) => admin(`/alumni/${id}/approve`, token, 'POST');
+export const rejectJoin = (token, id) => admin(`/alumni/${id}/reject`, token, 'POST');

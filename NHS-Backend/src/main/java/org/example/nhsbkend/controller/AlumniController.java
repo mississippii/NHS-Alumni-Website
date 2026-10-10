@@ -24,7 +24,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Public, read-only API used by the website. Only fields an alumnus has made public leave this class. */
+/** Public, read-only API used by the website. Only fields an alumnus has made public leave this class; join requests
+ * still waiting for an admin (PENDING) don't leave it at all. */
 @RestController
 @RequestMapping("/api")
 @Transactional(readOnly = true)
@@ -102,7 +103,8 @@ public class AlumniController {
 
     public record Batch(int year, long count, Map<String, Long> groups) {}
 
-    public record Stats(long alumni, long batches, long countries, long joined) {}
+    /** firstRecordBatch: earliest batch in the school's sheets; only older batches can join through the website. */
+    public record Stats(long alumni, long batches, long countries, long joined, Integer firstRecordBatch) {}
 
     public record EventItem(long id, java.time.LocalDate date, String time, String title, String place, String details) {}
 
@@ -133,7 +135,8 @@ public class AlumniController {
 
     @GetMapping("/alumni/{id}")
     public Profile profile(@PathVariable long id) {
-        Alumnus a = repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Alumnus a = repo.findById(id).filter(x -> x.getStatus() != Alumnus.Status.PENDING)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         boolean v = a.isVerified();
         // Village comes from the SSC records and is shown for everyone.
         return new Profile(Card.of(a), v ? a.getBio() : null, v ? a.getQuote() : null,
@@ -172,7 +175,8 @@ public class AlumniController {
 
     @GetMapping("/stats")
     public Stats stats() {
-        return new Stats(repo.count(), repo.countPerBatch().size(), countries().size(), repo.countByStatus(Alumnus.Status.VERIFIED));
+        return new Stats(repo.countByStatusNot(Alumnus.Status.PENDING), repo.countPerBatch().size(), countries().size(), repo.countByStatus(Alumnus.Status.VERIFIED),
+                repo.firstRecordBatch());
     }
 
     // ---------- search helpers ----------
@@ -197,6 +201,7 @@ public class AlumniController {
         Specification<Alumnus> spec(String skip) {
             return (r, query, cb) -> {
                 List<Predicate> p = new ArrayList<>();
+                p.add(cb.notEqual(r.get("status"), Alumnus.Status.PENDING));
                 if (!q.isEmpty()) {
                     String like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
                     List<Predicate> any = new ArrayList<>(List.of(cb.like(cb.lower(r.get("name")), like, '\\'),

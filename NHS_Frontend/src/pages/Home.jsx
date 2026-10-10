@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { fullName, getStats, listAlumni, listBatches, listEvents, SCHOOL, studentId } from '../api.js';
 import {
@@ -16,6 +16,19 @@ function BatchMarquee({ batches }) {
           {batches.map(b => <BatchCard key={b.year} batch={b} />)}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Swipeable row (native scroll-snap). Arrow buttons only when there is more than a desktop row holds; touch screens just swipe. */
+function Carousel({ children, arrows }) {
+  const ref = useRef(null);
+  const go = dir => ref.current.scrollBy({ left: dir * ref.current.clientWidth * 0.8, behavior: 'smooth' });
+  return (
+    <div className="carousel">
+      {arrows && <button type="button" className="carousel-btn prev" onClick={() => go(-1)} aria-label="Previous"><Icon name="chevron" /></button>}
+      <div className="carousel-track" ref={ref}>{children}</div>
+      {arrows && <button type="button" className="carousel-btn next" onClick={() => go(1)} aria-label="Next"><Icon name="chevron" /></button>}
     </div>
   );
 }
@@ -76,7 +89,7 @@ export default function Home() {
   const batches = useAsync(listBatches, []);
   const stats = useAsync(getStats, []);
   const groups = useAsync(() => listAlumni({ size: 1 }), []);
-  const joined = useAsync(() => listAlumni({ joined: true, sort: 'newest', size: 6 }), []);
+  const joined = useAsync(() => listAlumni({ joined: true, sort: 'newest', size: 10 }), []);
   const events = useAsync(listEvents, []);
   const s = stats.data;
   const total = s?.alumni || 0;
@@ -130,8 +143,8 @@ export default function Home() {
       {joined.data?.items.length > 0 && (
         <section className="section">
           <div className="wrap">
-            <SectionHead title="Recently joined" to="/directory" />
-            <div className="profile-cards">{joined.data.items.map(p => <ProfileCard key={p.id} person={p} />)}</div>
+            <SectionHead title="Recently joined" to="/directory?joined=true&sort=newest" />
+            <Carousel arrows={joined.data.items.length > 4}>{joined.data.items.map(p => <ProfileCard key={p.id} person={p} />)}</Carousel>
           </div>
         </section>
       )}

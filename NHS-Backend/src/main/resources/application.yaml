@@ -1,8 +1,11 @@
 spring:
   application:
     name: NHS-Bkend
+  # Server-only secrets (admin password hash, …), next to the jar's working directory and kept out of git.
+  config:
+    import: optional:file:./secrets.yaml
   profiles:
-    # Runs as the server (10.10.10.16:8100 + Eureka, see application-prod.yaml) unless told otherwise.
+    # Runs as the server (10.10.10.16:8081 + Eureka, see application-prod.yaml) unless told otherwise.
     # On another computer: --spring.profiles.active=local  (127.0.0.1:8081, no Eureka)
     default: prod
   datasource:
@@ -23,13 +26,16 @@ spring:
       max-request-size: 5MB
 
 server:
-  port: ${PORT:8081}   # 8080 is taken by nginx on this machine
+  port: ${PORT:8081}   # 8100 is the Sopsy gateway on this machine
   # Only this computer can reach the API; phones go through the website (Vite forwards /api).
   address: ${BIND_ADDRESS:127.0.0.1}
 
 nhs:
-  # Required for /api/admin/** (X-Admin-Token header). Empty = admin endpoints refuse every request.
-  admin-token: ${ADMIN_TOKEN:92f098853119eeb612bff8611aa3a700}
+  # Admin login for /admin (set in secrets.yaml): admin-email, and admin-password-hash (see AdminController.passwordMatches).
+  admin-email: ${ADMIN_EMAIL:}
+  admin-password-hash: ${ADMIN_PASSWORD_HASH:}
+  # Optional fixed X-Admin-Token for scripts (curl). Empty = only logged-in admins get in.
+  admin-token: ${ADMIN_TOKEN:}
 
 # Local runs don't use Eureka; the prod profile (application-prod.yaml) turns it on.
 eureka:

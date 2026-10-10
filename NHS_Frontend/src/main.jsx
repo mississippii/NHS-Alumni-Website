@@ -7,6 +7,7 @@ import Directory from './pages/Directory.jsx';
 import Batches from './pages/Batches.jsx';
 import Profile from './pages/Profile.jsx';
 import UpdateProfile from './pages/UpdateProfile.jsx';
+import Admin from './pages/Admin.jsx';
 import { Empty, useTitle } from './components/ui.jsx';
 import './index.css';
 
@@ -34,6 +35,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="alumni/:id" element={<Profile />} />
           <Route path="alumni/:id/update" element={<UpdateProfile />} />
           <Route path="join" element={<UpdateProfile />} />
+          <Route path="admin" element={<Admin />} />
           <Route path="about" element={<Later title="About the Alumni Association" />} />
           <Route path="*" element={<Later title="Page not found" />} />
         </Route>

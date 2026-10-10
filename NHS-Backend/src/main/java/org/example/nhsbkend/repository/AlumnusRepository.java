@@ -41,12 +41,23 @@ public interface AlumnusRepository extends JpaRepository<Alumnus, Long>, JpaSpec
 
     long countByStatus(Alumnus.Status status);
 
+    long countByStatusNot(Alumnus.Status status);
+
+    boolean existsByEmailIgnoreCaseAndStatus(String email, Alumnus.Status status);
+
+    List<Alumnus> findByStatusOrderByIdAsc(Alumnus.Status status);
+
+    /** Earliest batch from the school's sheets (rows with a roll); older batches can only join through the website. */
+    @Query("select min(a.batch) from Alumnus a where a.roll is not null")
+    Integer firstRecordBatch();
+
     List<Alumnus> findByFeaturedTrueAndStatusOrderByName(Alumnus.Status status);
 
-    @Query("select a.batch, count(a) from Alumnus a group by a.batch order by a.batch")
+    // Join requests waiting for an admin (PENDING) are not public: left out of every count.
+    @Query("select a.batch, count(a) from Alumnus a where a.status <> org.example.nhsbkend.entity.Alumnus.Status.PENDING group by a.batch order by a.batch")
     List<Object[]> countPerBatch();
 
-    @Query("select a.batch, a.department, count(a) from Alumnus a group by a.batch, a.department")
+    @Query("select a.batch, a.department, count(a) from Alumnus a where a.status <> org.example.nhsbkend.entity.Alumnus.Status.PENDING group by a.batch, a.department")
     List<Object[]> countPerBatchAndDepartment();
 
     @Query("select distinct a.country from Alumnus a where a.status = :status and a.showLocation = true and a.country is not null order by a.country")

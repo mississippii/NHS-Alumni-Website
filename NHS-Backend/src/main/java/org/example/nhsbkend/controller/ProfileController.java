@@ -26,9 +26,11 @@ import java.util.regex.Pattern;
 /**
  * Join / update-my-profile, without passwords. The student fills the form and presses Submit; a PIN goes to the email
  * in the form, and the form is saved once they type the PIN back (see PinService).
- * PIN right = saved and public at once (no admin step, by the owner's choice). The first PIN claims the record and its
+ * PIN right = saved and public at once for records from the school's sheets. The first PIN claims the record and its
  * email becomes the key: after that only PINs sent to that address can change it. A wrong claim is undone by an admin
  * with POST /api/admin/alumni/{id}/reset.
+ * Joining (batches older than the sheets) is different: the PIN only proves the email, and the new record stays PENDING,
+ * hidden from the site, until an admin approves it (see AdminController).
  */
 @RestController
 @RequestMapping("/api")
@@ -40,7 +42,8 @@ public class ProfileController {
 
     public record Form(String email, String pin, String name, Integer batch, String group,
                        String phone, String bloodGroup, String title, String org, String industry, String city, String country,
-                       String bio, Boolean showPhone, Boolean showEmail, List<EducationIn> education, Map<String, String> socials) {}
+                       String bio, Boolean showPhone, Boolean showEmail, List<EducationIn> education, Map<String, String> socials,
+                       String village) {}
 
     private static final Set<String> BLOOD = Set.of("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-");
     private static final Set<String> EDU_TYPES = Set.of("College", "University");
@@ -91,14 +94,14 @@ public class ProfileController {
         return Map.of("status", "SENT");
     }
 
-    /** Someone who isn't in the school's sheets (e.g. SSC before 2006) adds themselves. */
+    /** Someone who isn't in the school's sheets (e.g. SSC before 2006) asks to join; an admin approves it. */
     @PostMapping(value = "/alumni/join", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public Map<String, Object> join(@RequestPart("form") Form f, @RequestPart(value = "photo", required = false) MultipartFile photo) throws IOException {
         Alumnus a = newMember(f);
         BufferedImage img = image(photo);
         pins.check(a.getEmail(), f.pin(), true);
-        a.setStatus(Alumnus.Status.VERIFIED);
+        a.setStatus(Alumnus.Status.PENDING);
         a.setId(repo.nextId(a.getBatch(), a.getDepartment()));
         a = repo.save(a); // an assigned ID means save() merges: keep working on the managed copy
         if (img != null) a.setPhotoUrl(photos.save(a.getId(), img, 0.5, 0.4, 1));
@@ -107,17 +110,25 @@ public class ProfileController {
 
     private Alumnus newMember(Form f) {
         String email = email(f.email());
+        if (repo.existsByEmailIgnoreCaseAndStatus(email, Alumnus.Status.PENDING))
+            throw bad(HttpStatus.CONFLICT, "You already asked to join with this email. It is waiting for admin approval.");
         if (repo.existsByEmailIgnoreCase(email))
             throw bad(HttpStatus.CONFLICT, "This email already belongs to a profile. Find yours in the directory and update it there.");
         Alumnus a = new Alumnus();
         a.setName(text(f.name(), 120, "Name"));
         if (a.getName() == null || a.getName().length() < 3) throw bad(HttpStatus.BAD_REQUEST, "Enter your full name.");
-        int max = Year.now().getValue() + 5; // current students join with the year they'll sit SSC
+        // Batches from the school's sheets are already listed: those students update their record instead of joining.
+        Integer first = repo.firstRecordBatch();
+        int max = first == null ? Year.now().getValue() + 5 : first - 1;
         if (f.batch() == null || f.batch() < FOUNDED || f.batch() > max)
-            throw bad(HttpStatus.BAD_REQUEST, "Batch must be between " + FOUNDED + " and " + max + ".");
+            throw bad(HttpStatus.BAD_REQUEST, "Batch must be between " + FOUNDED + " and " + max + "."
+                    + (first == null ? "" : " From " + first + " on you're already listed: find yourself in the directory and update your profile."));
         a.setBatch(f.batch());
         if (!GROUPS.contains(f.group())) throw bad(HttpStatus.BAD_REQUEST, "Pick your group.");
         a.setDepartment(f.group());
+        // Records from the sheets bring their village; people joining type it (required, shown on the profile).
+        a.setVillage(text(f.village(), 80, "Village"));
+        if (a.getVillage() == null) throw bad(HttpStatus.BAD_REQUEST, "Enter your village.");
         a.setEmail(email);
         apply(a, f);
         return a;
@@ -125,6 +136,8 @@ public class ProfileController {
 
     /** The email allowed to change this record: the one on file once it has been claimed, otherwise any unused one. */
     private String owner(Alumnus a, String raw) {
+        if (a.getStatus() == Alumnus.Status.PENDING)
+            throw bad(HttpStatus.CONFLICT, "This profile is waiting for admin approval.");
         String email = email(raw);
         if (a.getStatus() == Alumnus.Status.UNCLAIMED) {
             if (repo.existsByEmailIgnoreCase(email))

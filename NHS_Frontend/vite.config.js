@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Server 10.10.10.16: the site on :3100, the backend (NHS-Backend) on :8100.
+// Server 10.10.10.16: the site on :3100, the backend (NHS-Backend) on :8081.
 // On another computer: HOST=localhost API_URL=http://localhost:8081 npm run dev
 const host = process.env.HOST || '10.10.10.16';
 const api = process.env.API_URL || 'http://10.10.10.16:8081';

@@ -32,6 +32,8 @@ import static org.junit.jupiter.api.Assertions.*;
         "spring.datasource.username=sa",
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "nhs.admin-token=test",
+        "nhs.admin-email=Admin@Example.com",
+        "nhs.admin-password-hash=pbkdf2$1000$MDEyMzQ1Njc4OWFiY2RlZg==$tiKWHy4FAGCWE8gn6GtKhaxD2OeeAUUWXFT/p1aaNl8=",
         "nhs.upload-dir=target/test-uploads"})
 class AlumniApiTests {
 
@@ -226,7 +228,7 @@ class AlumniApiTests {
 
     static ProfileController.Form form(String email, String pin, java.util.Map<String, String> socials) {
         return new ProfileController.Form(email, pin, null, null, null, "01932590638", "B+", "Engineer", "ACME", null, "Dhaka",
-                "Bangladesh", null, true, false, List.of(new ProfileController.EducationIn("College", "Sonar Bangla College", null, 2016)), socials);
+                "Bangladesh", null, true, false, List.of(new ProfileController.EducationIn("College", "Sonar Bangla College", null, 2016)), socials, null);
     }
 
     @Test
@@ -246,7 +248,7 @@ class AlumniApiTests {
         assertThrows(err, () -> form.submit(id, form("t@example.com", pin, good), null)); // PIN used up
 
         assertThrows(err, () -> form.pin(id, form("other@example.com", null, null))); // claimed: other emails locked out
-        var noPhone = new ProfileController.Form("t@example.com", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var noPhone = new ProfileController.Form("t@example.com", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         assertThrows(err, () -> form.pin(id, noPhone)); // phone is required
 
         var p = api.profile(id);
@@ -269,10 +271,10 @@ class AlumniApiTests {
 
         // a 1985 student who isn't in any sheet
         var j = new ProfileController.Form("old@example.com", null, "Abdul Karim", 1985, "Science",
-                "01711000000", null, null, null, null, null, null, null, null, null, null, null);
+                "01711000000", null, null, null, null, null, null, null, null, null, null, null, "Nimsar");
         form.joinPin(j);
         j = new ProfileController.Form("old@example.com", pinFor("old@example.com"), "Abdul Karim", 1985, "Science",
-                "01711000000", null, null, null, null, null, null, null, null, null, null, null);
+                "01711000000", null, null, null, null, null, null, null, null, null, null, null, "Nimsar");
         var png = new java.io.ByteArrayOutputStream();
         javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(200, 300, java.awt.image.BufferedImage.TYPE_INT_RGB), "png", png);
         var junk = new org.springframework.mock.web.MockMultipartFile("photo", "x.png", "image/png", "not an image".getBytes());
@@ -281,10 +283,36 @@ class AlumniApiTests {
         long newId = (Long) form.join(j, new org.springframework.mock.web.MockMultipartFile("photo", "me.png", "image/png", png.toByteArray())).get("id");
         assertEquals(8503001L, newId); // the first 1985 Science student
         assertTrue(repo.findById(newId).orElseThrow().getPhotoUrl().startsWith("/api/photos/" + newId + ".jpg"));
+        // a join waits for the admin: hidden from the site, can't be edited, can't be asked for twice
+        assertEquals(Alumnus.Status.PENDING, repo.findById(newId).orElseThrow().getStatus());
+        assertThrows(err, () -> api.profile(newId));
+        assertEquals(0, api.search("karim", 0, 0, null, null, null, "", false, "name", 1, 24).total());
+        assertEquals(1, api.stats().alumni());
+        assertThrows(err, () -> form.pin(newId, form("old@example.com", null, null)));
+        assertThrows(err, () -> form.joinPin(j2("old@example.com", 1985)));
+        assertThrows(err, () -> admin.pending("wrong"));
+        assertEquals(List.of(newId), admin.pending("test").stream().map(AdminController.Pending::id).toList());
+        admin.approve("test", newId);
+        assertThrows(err, () -> admin.approve("test", newId)); // only once
+        assertEquals(List.of(), admin.pending("test"));
         assertEquals(1985, api.profile(newId).card().batch());
+        assertEquals("Nimsar", api.profile(newId).village());
         assertTrue(api.profile(newId).card().joined());
         admin.reset("test", newId); // joined via the website: removed
         assertTrue(repo.findById(newId).isEmpty());
+        // joining needs a village
+        assertThrows(err, () -> form.joinPin(new ProfileController.Form("v@example.com", null, "Abdul Karim", 1990, "Science",
+                "01711000000", null, null, null, null, null, null, null, null, null, null, null, "  ")));
+        // batches from the sheets (2014 here) can't join: they update their record instead; the website reads the cut-off from stats
+        assertEquals(2014, api.stats().firstRecordBatch()); // the approved 1985 member doesn't move it
+        assertThrows(err, () -> form.joinPin(j2("new@example.com", 2014)));
+        // a rejected request is deleted
+        form.joinPin(j2("spam@example.com", 1990));
+        form.join(new ProfileController.Form("spam@example.com", pinFor("spam@example.com"), "Spam Person", 1990, "Science",
+                "01711000001", null, null, null, null, null, null, null, null, null, null, null, "Korpai"), null);
+        long spam = admin.pending("test").getFirst().id();
+        admin.reject("test", spam);
+        assertTrue(repo.findById(spam).isEmpty());
         admin.reset("test", id); // from the sheet: back to plain SSC data, open to claim again
         assertFalse(api.profile(id).card().joined());
         assertNull(repo.findById(id).orElseThrow().getEmail());
@@ -301,6 +329,24 @@ class AlumniApiTests {
             assertEquals(List.of("9001.jpg"), files.map(f -> f.getFileName().toString()).filter(n -> n.startsWith("9001")).toList());
         }
         photos.delete(9001);
+    }
+
+    @Test
+    void adminLogsInWithEmailAndPassword() {
+        Class<org.springframework.web.server.ResponseStatusException> err = org.springframework.web.server.ResponseStatusException.class;
+        assertThrows(err, () -> admin.login(new AdminController.Login("admin@example.com", "wrong")));
+        assertThrows(err, () -> admin.login(new AdminController.Login("other@example.com", "secret")));
+        assertThrows(err, () -> admin.pending(null));
+        String t = admin.login(new AdminController.Login(" admin@example.com ", "secret")).get("token");
+        assertEquals(List.of(), admin.pending(t)); // the login token opens the admin API
+        admin.logout(t);
+        assertThrows(err, () -> admin.pending(t));
+        assertEquals(List.of(), admin.pending("test")); // the fixed script token still works
+    }
+
+    static ProfileController.Form j2(String email, int batch) {
+        return new ProfileController.Form(email, null, "Abdul Karim", batch, "Science", "01711000000",
+                null, null, null, null, null, null, null, null, null, null, null, "Nimsar");
     }
 
     static Object getField(Object o, String name) throws Exception {
