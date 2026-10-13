@@ -30,6 +30,8 @@ export const listEvents = () => get('/events');
 /** Members' comments (the profile form's comment box), newest first. */
 export const listComments = () => get('/comments');
 /** Anonymous like: the server keeps only the count. */
+/** Reply to a comment as the student with this ID; parentId = the reply being answered. */
+export const addReply = (commentId, studentId, text, parentId) => post(`/comments/${commentId}/replies`, { studentId: +studentId, text, parentId });
 export const likeComment = (id, undo) => post(`/comments/${id}/like${undo ? '?undo=true' : ''}`);
 export const checkRoll = (id, roll) => post(`/alumni/${id}/roll`, { roll: +roll });
 /** Home page: batch + group + SSC roll → { id } of that student's record. */

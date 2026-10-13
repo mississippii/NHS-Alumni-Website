@@ -179,6 +179,7 @@ button { font: inherit; color: inherit; }
   font: 600 calc(var(--size) * .38)/1 var(--f-sans); letter-spacing: .02em;
 }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-xs { --size: 24px; }
 .avatar-sm { --size: 32px; }
 .avatar-lg { --size: 56px; }
 .avatar-xl { --size: 96px; box-shadow: 0 0 0 4px var(--surface); }
@@ -1105,6 +1106,27 @@ button { font: inherit; color: inherit; }
 .comment-like.on { color: var(--brand); }
 .comment-like.on svg { fill: currentColor; }
 .comments-all { justify-self: start; margin-left: 40px; }
+/* replies: smaller rows under the comment, joined to the parent's photo by Facebook-style curved lines */
+.replies { list-style: none; padding: 0; margin: var(--s-2) 0 0; display: grid; gap: var(--s-2); }
+.reply { grid-template-columns: 24px minmax(0, 1fr); }
+.replies > li > .comment-more { padding-left: var(--s-1); min-height: 24px; }
+@supports (overflow: clip) {
+  /* each line starts far up and is cut at the top of the parent row (overflow-y: clip), so it always reaches the parent's photo */
+  .comment { position: relative; overflow-y: clip; }
+  .comment > a { position: relative; z-index: 1; }
+  .replies > li { position: relative; }
+  .replies > li:not(.no-line)::before {
+    content: ''; position: absolute; bottom: calc(100% - 12px); height: 9999px; left: -25px; width: 21px;
+    border: 0 solid var(--border-strong); border-width: 0 0 2px 2px; border-bottom-left-radius: 12px;
+  }
+  .reply .replies > li:not(.no-line)::before { left: -21px; width: 17px; } /* under a reply: its photo is smaller */
+}
+.reply-box { display: grid; gap: var(--s-2); padding-bottom: 4px; } /* room for the focus ring inside the clipped row */
+.reply-box .input { font-size: 16px; }
+.reply-as { font-size: var(--t-sm); color: var(--text-2); }
+.sid-hint { padding: var(--s-3); border-radius: var(--r-sm); background: var(--surface-2); font-size: var(--t-sm); color: var(--text-2); text-align: left; }
+.sid-hint .ic, .sid-hint svg { width: 16px; height: 16px; vertical-align: -3px; }
+.reply-actions { display: flex; justify-content: flex-end; gap: var(--s-2); }
 /* profile on phones: smaller name, tick/badge kept right beside it (the name wraps, the tick doesn't drop to its own line) */
 @media (max-width: 959px) {
   .profile-name { flex-wrap: nowrap; gap: 6px; }

@@ -480,10 +480,14 @@ public class AdminController {
     }
 
     private void requireAdmin(String given) {
-        if (given == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please log in as admin.");
-        if (token.length > 0 && MessageDigest.isEqual(token, given.getBytes(StandardCharsets.UTF_8))) return;
+        if (!isAdmin(given)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please log in as admin.");
+    }
+
+    /** True for the fixed token or a live login token. */
+    public boolean isAdmin(String given) {
+        if (given == null) return false;
+        if (token.length > 0 && MessageDigest.isEqual(token, given.getBytes(StandardCharsets.UTF_8))) return true;
         Instant exp = sessions.get(given);
-        if (exp != null && exp.isAfter(Instant.now())) return;
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please log in as admin.");
+        return exp != null && exp.isAfter(Instant.now());
     }
 }

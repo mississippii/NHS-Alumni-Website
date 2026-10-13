@@ -48,10 +48,13 @@ class AlumniApiTests {
     @Autowired org.example.nhsbkend.controller.StoryController stories;
     @Autowired PinService pins;
     @Autowired org.example.nhsbkend.service.PhotoService photos;
+    @Autowired org.example.nhsbkend.controller.ReplyController replyApi;
+    @Autowired org.example.nhsbkend.repository.ReplyRepository replyRepo;
 
     @org.junit.jupiter.api.BeforeEach
     void cleanDatabase() {
         storyRepo.deleteAll();
+        replyRepo.deleteAll();
         repo.deleteAll();
         eventRepo.deleteAll();
     }
@@ -239,6 +242,31 @@ class AlumniApiTests {
         api.like(1401001, false);
         assertEquals(List.of("Newest", "Old friend"), api.comments().stream().map(AlumniController.Comment::comment).toList());
         assertEquals(1, api.comments().get(1).likes());
+    }
+
+    @Test
+    void repliesNeedAStudentIdAndNestTwoLevels() {
+        for (long id : new long[]{201401001, 201401002, 201401003}) {
+            var a = new Alumnus();
+            a.setId(id); a.setName("N" + id); a.setBatch(2014); a.setDepartment("Science");
+            a.setStatus(id == 201401003 ? Alumnus.Status.UNCLAIMED : Alumnus.Status.VERIFIED); a.setBio(id == 201401001 ? "Hello all" : null);
+            a.setUpdatedAt(java.time.Instant.now());
+            repo.save(a);
+        }
+        var err = org.springframework.web.server.ResponseStatusException.class;
+        assertThrows(err, () -> replyApi.reply(201401001, new org.example.nhsbkend.controller.ReplyController.ReplyIn(999999999L, "hi", null))); // no such student
+        assertThrows(err, () -> replyApi.reply(201401001, new org.example.nhsbkend.controller.ReplyController.ReplyIn(201401002L, " ", null))); // empty
+        assertThrows(err, () -> replyApi.reply(201401002, new org.example.nhsbkend.controller.ReplyController.ReplyIn(201401002L, "hi", null))); // no comment there
+        var top = replyApi.reply(201401001, new org.example.nhsbkend.controller.ReplyController.ReplyIn(1401002L, "Hi!", null)); // old 7-digit ID still works
+        assertEquals("N201401002", top.name());
+        var sub = replyApi.reply(201401001, new org.example.nhsbkend.controller.ReplyController.ReplyIn(201401003L, "Me too", top.id())); // not joined yet: fine
+        var subsub = replyApi.reply(201401001, new org.example.nhsbkend.controller.ReplyController.ReplyIn(201401002L, "Yes", sub.id()));
+        assertEquals(top.id(), sub.parentId());
+        assertEquals(top.id(), subsub.parentId()); // a reply to a reply stays in the same thread
+        assertEquals(List.of("Hi!", "Me too", "Yes"), api.comments().get(0).replies().stream().map(org.example.nhsbkend.controller.ReplyController.ReplyItem::text).toList());
+        assertThrows(err, () -> replyApi.delete(null, top.id()));       // admin only
+        replyApi.delete("test", top.id());                                // the thread goes with it
+        assertEquals(0, api.comments().get(0).replies().size());
     }
 
     @Test

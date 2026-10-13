@@ -36,11 +36,13 @@ public class AlumniController {
     private final AlumnusRepository repo;
     private final EventRepository events;
     private final EntityManager em;
+    private final ReplyController replyApi;
 
-    public AlumniController(AlumnusRepository repo, EventRepository events, EntityManager em) {
+    public AlumniController(AlumnusRepository repo, EventRepository events, EntityManager em, ReplyController replyApi) {
         this.repo = repo;
         this.events = events;
         this.em = em;
+        this.replyApi = replyApi;
     }
 
     // ---------- response shapes ----------
@@ -167,14 +169,18 @@ public class AlumniController {
     }
 
     /** A member's comment, shown with their photo on the Events section. */
-    public record Comment(long id, String name, int batch, String group, String photo, String comment, java.time.Instant at, int likes) {}
+    public record Comment(long id, String name, int batch, String group, String photo, String comment, java.time.Instant at, int likes,
+                          List<ReplyController.ReplyItem> replies) {}
 
     /** Comments from joined members (not memorials), newest first. */
     @GetMapping("/comments")
     public List<Comment> comments() {
-        return repo.findTop30ByStatusAndDeceasedFalseAndBioIsNotNullOrderByUpdatedAtDescIdDesc(Alumnus.Status.VERIFIED).stream()
-                .filter(a -> !a.getBio().isBlank())
-                .map(a -> new Comment(a.getId(), a.getName(), a.getBatch(), a.getDepartment(), Card.blank(a.getPhotoUrl()), a.getBio().strip(), a.getUpdatedAt(), a.getLikes()))
+        var list = repo.findTop30ByStatusAndDeceasedFalseAndBioIsNotNullOrderByUpdatedAtDescIdDesc(Alumnus.Status.VERIFIED).stream()
+                .filter(a -> !a.getBio().isBlank()).toList();
+        var byComment = replyApi.under(list.stream().map(Alumnus::getId).toList());
+        return list.stream()
+                .map(a -> new Comment(a.getId(), a.getName(), a.getBatch(), a.getDepartment(), Card.blank(a.getPhotoUrl()), a.getBio().strip(), a.getUpdatedAt(), a.getLikes(),
+                        byComment.getOrDefault(a.getId(), List.of())))
                 .toList();
     }
 

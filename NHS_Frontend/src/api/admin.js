@@ -22,3 +22,4 @@ export const saveMemorial = (token, id, form, photo) =>
   sendForm(id ? `/admin/alumni/${id}/memorial` : '/admin/memorials', { 'X-Admin-Token': token }, form, photo);
 /** Admin add/edit, live at once. form = { id, studentId, name, batch, kind, title, role, quote, body, removePhoto }; photo = Blob or null. */
 export const saveStory = (token, form, photo) => sendForm('/admin/stories', { 'X-Admin-Token': token }, form, photo);
+export const deleteReply = (token, id) => admin(`/replies/${id}`, token, 'DELETE');
