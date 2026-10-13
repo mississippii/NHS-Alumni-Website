@@ -94,7 +94,7 @@ export default function Directory() {
     <>
       {batchInfo ? (
         <PageHeader crumbs={[['/alumni', 'Alumni'], [null, `Batch ${f.batch}`]]} title={`Batch ${f.batch}`}
-          desc={`${batchInfo.count.toLocaleString()} alumni who first sat SSC in ${f.batch}.`}>
+          desc={<>{batchInfo.count.toLocaleString()} alumni · <b className="batch-active"><Icon name="verified" />Active {(batchInfo.active ?? 0).toLocaleString()}</b></>}>
           <BatchSummary batch={batchInfo} />
         </PageHeader>
       ) : (

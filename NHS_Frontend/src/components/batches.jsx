@@ -1,15 +1,13 @@
 // A batch: its card, and the bar that splits it by group.
 import { Link } from 'react-router-dom';
+import { groupShort } from '../lib/format.js';
 import { GROUPS, isJubilee, THIS_YEAR } from '../lib/school.js';
 
 /** Batch summary: total plus the per-group split, used at the top of a batch roster. */
 export function BatchSummary({ batch: b }) {
   return (
-    <div className="batch-summary">
-      <GroupBar groups={b.groups} total={b.count} />
-      <div className="legend">
-        {GROUPS.map(g => <span key={g.name}><i className={g.cls} />{g.name} <b className="num">{b.groups?.[g.name] || 0}</b></span>)}
-      </div>
+    <div className="batch-summary legend">
+      {GROUPS.map(g => <span key={g.name}><i className={g.cls} />{groupShort(g.name)}<b className="num">{b.groups?.[g.name] || 0}</b></span>)}
     </div>
   );
 }

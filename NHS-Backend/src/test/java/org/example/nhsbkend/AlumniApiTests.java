@@ -237,6 +237,7 @@ class AlumniApiTests {
             repo.save(a);
         }
         assertEquals(List.of("Newest", "Old friend"), api.comments().stream().map(AlumniController.Comment::comment).toList());
+        assertEquals(3, api.batches().get(0).active()); // verified only: no memorial, unclaimed or pending
         // likes: a bare count that never goes below 0, and liking doesn't move the comment
         assertEquals(List.of(1, 2, 1, 0, 0), java.util.stream.Stream.of(false, false, true, true, true).map(u -> api.like(1401001, u).get("likes")).toList());
         api.like(1401001, false);

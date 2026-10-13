@@ -338,9 +338,12 @@ button { font: inherit; color: inherit; }
 .student-work { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--t-xs); line-height: 1.35; color: var(--text-2); }
 .student-work.muted { color: var(--text-3); }
 .student-skel { aspect-ratio: 1 / .95; border-radius: var(--r-md); }
-.batch-summary { display: grid; gap: var(--s-3); max-width: 560px; margin-top: var(--s-3); }
-.batch-summary .gbar { height: 8px; }
-.batch-summary .legend b { color: var(--text); margin-left: 2px; }
+/* batch page header: title + counts on the left, students per department listed on the right */
+.page-header:has(.batch-summary) .wrap { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-4); align-items: center; }
+.page-header:has(.batch-summary) .breadcrumb { grid-column: 1 / -1; }
+.legend.batch-summary { grid-column: 2; grid-row: 2 / span 2; display: grid; gap: 2px; }
+.batch-summary span { justify-content: flex-start; }
+.batch-summary b { margin-left: auto; padding-left: var(--s-3); color: var(--text); }
 
 /* compact profile card (home "recently joined") */
 .profile-cards { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
@@ -1105,6 +1108,8 @@ button { font: inherit; color: inherit; }
 .comment-like svg { width: 15px; height: 15px; }
 .comment-like.on { color: var(--brand); }
 .comment-like.on svg { fill: currentColor; }
+.batch-active { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; color: var(--text); white-space: nowrap; vertical-align: bottom; }
+.batch-active svg { width: 15px; height: 15px; color: var(--verified); }
 .comments-all { justify-self: start; margin-left: 40px; }
 /* replies: smaller rows under the comment, joined to the parent's photo by Facebook-style curved lines */
 .replies { list-style: none; padding: 0; margin: var(--s-2) 0 0; display: grid; gap: var(--s-2); }

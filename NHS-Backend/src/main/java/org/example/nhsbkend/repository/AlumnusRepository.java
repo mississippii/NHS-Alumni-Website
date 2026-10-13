@@ -74,6 +74,10 @@ public interface AlumnusRepository extends JpaRepository<Alumnus, Long>, JpaSpec
     @Query("select a.batch, a.department, count(a) from Alumnus a where a.status <> org.example.nhsbkend.entity.Alumnus.Status.PENDING and a.name is not null group by a.batch, a.department")
     List<Object[]> countPerBatchAndDepartment();
 
+    /** Active members per batch: verified profiles, memorials left out. */
+    @Query("select a.batch, count(a) from Alumnus a where a.status = org.example.nhsbkend.entity.Alumnus.Status.VERIFIED and a.deceased = false group by a.batch")
+    List<Object[]> countActivePerBatch();
+
     @Query("select distinct a.country from Alumnus a where a.status = :status and a.showLocation = true and a.country is not null order by a.country")
     List<String> countriesOf(Alumnus.Status status);
 }

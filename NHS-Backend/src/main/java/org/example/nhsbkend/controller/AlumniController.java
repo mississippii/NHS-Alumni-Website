@@ -103,7 +103,8 @@ public class AlumniController {
 
     public record SearchResult(List<Card> items, long total, int page, int pages, Map<String, Map<String, Long>> facets) {}
 
-    public record Batch(int year, long count, Map<String, Long> groups) {}
+    /** active: verified members of the batch (not memorials). */
+    public record Batch(int year, long count, Map<String, Long> groups, long active) {}
 
     /** firstRecordBatch: earliest batch in the school's sheets; only older batches can join through the website. */
     public record Stats(long alumni, long batches, long countries, long joined, Integer firstRecordBatch) {}
@@ -159,8 +160,10 @@ public class AlumniController {
         Map<Integer, Map<String, Long>> groups = new java.util.HashMap<>();
         for (Object[] r : repo.countPerBatchAndDepartment())
             groups.computeIfAbsent((Integer) r[0], k -> new java.util.TreeMap<>()).put((String) r[1], (Long) r[2]);
+        Map<Integer, Long> active = new java.util.HashMap<>();
+        for (Object[] r : repo.countActivePerBatch()) active.put((Integer) r[0], (Long) r[1]);
         return repo.countPerBatch().stream()
-                .map(r -> new Batch((Integer) r[0], (Long) r[1], groups.getOrDefault((Integer) r[0], Map.of()))).toList();
+                .map(r -> new Batch((Integer) r[0], (Long) r[1], groups.getOrDefault((Integer) r[0], Map.of()), active.getOrDefault((Integer) r[0], 0L))).toList();
     }
 
     @GetMapping("/countries")
