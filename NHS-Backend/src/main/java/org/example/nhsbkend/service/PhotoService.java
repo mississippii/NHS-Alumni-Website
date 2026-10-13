@@ -74,6 +74,30 @@ public class PhotoService implements WebMvcConfigurer {
         return "/api/photos/" + id + ".jpg?v=" + Instant.now().getEpochSecond();
     }
 
+    static final int WIDE = 1200;
+
+    /** A story picture: keeps its shape, shrunk to at most 1200px wide. Saved as story-{id}.jpg. */
+    public String saveStory(long id, InputStream in) throws IOException {
+        BufferedImage src = read(in);
+        double k = Math.min(1, (double) WIDE / src.getWidth());
+        int w = (int) Math.round(src.getWidth() * k), h = (int) Math.round(src.getHeight() * k);
+        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = out.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, w, h);
+        g.drawImage(src, 0, 0, w, h, null);
+        g.dispose();
+        Path tmp = dir.resolve("story-" + id + ".jpg.tmp"), target = dir.resolve("story-" + id + ".jpg");
+        writeJpeg(out, tmp);
+        Files.move(tmp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        return "/api/photos/story-" + id + ".jpg?v=" + Instant.now().getEpochSecond();
+    }
+
+    public void deleteStory(long id) throws IOException {
+        Files.deleteIfExists(dir.resolve("story-" + id + ".jpg"));
+    }
+
     private static int clampOffset(double v, int max) {
         return (int) Math.round(Math.clamp(v, 0, Math.max(0, max)));
     }

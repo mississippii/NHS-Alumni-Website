@@ -8,7 +8,8 @@ const api = process.env.API_URL || 'http://10.10.10.16:8081';
 
 // The browser only ever talks to Vite, which forwards /api to the backend (no CORS needed).
 // strictPort: fail instead of silently moving to another port.
-const site = { host, port: 3100, strictPort: true, proxy: { '/api': api } };
+// allowedHosts: the domain nginx forwards here (vite refuses unknown host names).
+const site = { host, port: 3100, strictPort: true, proxy: { '/api': api }, allowedHosts: ['nhsalumni.org', 'www.nhsalumni.org'] };
 
 export default defineConfig({
   plugins: [react()],

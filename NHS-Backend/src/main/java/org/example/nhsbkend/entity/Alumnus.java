@@ -25,7 +25,8 @@ public class Alumnus {
     private Long id;
 
     // --- from the SSC record ---
-    @Column(nullable = false, length = 120)
+    // Null for students added from a board result sheet (roll only): they type their name when they claim the record.
+    @Column(length = 120)
     private String name;
     @Column(nullable = false)
     private int batch;
@@ -55,6 +56,8 @@ public class Alumnus {
     @Column(length = 30) private String phone;
     @Column(length = 10) private String bloodGroup; // A+, A-, B+, B-, AB+, AB-, O+, O- ("b+ve" etc. is tidied on display)
     @Column(length = 2000) private String bio;
+    /** Likes on the bio, shown as a comment on Events. A bare count: who liked isn't stored. */
+    @Column(nullable = false, columnDefinition = "int default 0") private int likes;
     @Column(length = 500) private String quote;
     private boolean featured;
     // --- related rows (normalized: one row per item, deleted with the student) ---
@@ -76,6 +79,21 @@ public class Alumnus {
     private boolean showPhone = true;
     @org.hibernate.annotations.ColumnDefault("true")
     private boolean showEmail = true;
+
+    /** Private: asked on the form, shown only to the admin, never on the public profile. */
+    private java.time.LocalDate birthDate;
+
+    /** When the profile first went live (claimed with the PIN, or a join request approved); orders "Recently joined". */
+    private java.time.Instant joinedAt;
+
+    /** Passed away: set by the admin only. The profile becomes a memorial (shows everything a member's profile shows; out of blood-donor search; no edits). */
+    @org.hibernate.annotations.ColumnDefault("false")
+    private boolean deceased;
+    private java.time.LocalDate passedOn; // date of death, optional
+    private Integer passedYear;           // its year; also kept alone when only the year is known
+
+    /** Last time the owner saved the profile (or an admin approved it). */
+    private java.time.Instant updatedAt;
 
     public boolean isVerified() {
         return status == Status.VERIFIED;

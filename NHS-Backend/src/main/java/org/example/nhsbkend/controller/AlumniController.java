@@ -48,14 +48,14 @@ public class AlumniController {
     /** Directory card. Unclaimed records show only name, batch and department. */
     public record Card(long id, String name, int batch, String group, String industry, String title, String org,
                        String city, String country, String photo, boolean featured, boolean joined, String bloodGroup,
-                       String edu) {
+                       String edu, boolean memorial, java.time.LocalDate passedOn, Integer passedYear) {
         static Card of(Alumnus a) {
-            boolean v = a.isVerified(), loc = v && a.isShowLocation();
+            boolean v = a.isVerified(), loc = v && a.isShowLocation(), m = a.isDeceased();
             return new Card(a.getId(), a.getName(), a.getBatch(), a.getDepartment(),
                     v ? blank(a.getIndustry()) : null, v ? blank(a.getTitle()) : null, v ? blank(a.getOrganization()) : null,
                     loc ? blank(a.getCity()) : null, loc ? blank(a.getCountry()) : null,
-                    v ? blank(a.getPhotoUrl()) : null, v && a.isFeatured(), v, v ? Contact.blood(a.getBloodGroup()) : null,
-                    v ? highestEducation(a) : null);
+                    v ? blank(a.getPhotoUrl()) : null, v && a.isFeatured(), v && !m, v ? Contact.blood(a.getBloodGroup()) : null,
+                    v ? highestEducation(a) : null, m, m ? a.getPassedOn() : null, m ? a.getPassedYear() : null);
         }
 
         /** University before college; among equals the most recently added (the form lists oldest first). */
@@ -66,7 +66,7 @@ public class AlumniController {
         }
 
         // Rows edited by hand in MySQL may hold '' instead of NULL.
-        private static String blank(String s) {
+        static String blank(String s) {
             return s == null || s.isBlank() ? null : s;
         }
     }
@@ -80,8 +80,8 @@ public class AlumniController {
         private static final java.util.Set<String> BLOOD = java.util.Set.of("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-");
 
         static Contact of(Alumnus a) {
-            if (!a.isVerified()) return null;
-            return new Contact(a.isShowPhone() ? blank(a.getPhone()) : null, a.isShowEmail() ? blank(a.getEmail()) : null, blood(a.getBloodGroup()));
+            if (!a.isVerified()) return null; // memorials show the same as a living member
+            return new Contact(a.isShowPhone() ? blank(a.getPhone()) : null, blank(a.getEmail()), blood(a.getBloodGroup()));
         }
 
         /** "b+ve", "O −" … → "B+", "O-"; null if it isn't a blood group. */
@@ -91,13 +91,13 @@ public class AlumniController {
             return bg != null && BLOOD.contains(bg) ? bg : null;
         }
 
-        private static String blank(String s) {
+        static String blank(String s) {
             return s == null || s.isBlank() ? null : s.trim();
         }
     }
 
     public record Profile(Card card, String bio, String quote, String village, Contact contact, List<Socials.Social> socials,
-                          List<EducationItem> education, List<JobItem> career) {}
+                          List<EducationItem> education, List<JobItem> career, String sex) {}
 
     public record SearchResult(List<Card> items, long total, int page, int pages, Map<String, Map<String, Long>> facets) {}
 
@@ -140,15 +140,16 @@ public class AlumniController {
         boolean v = a.isVerified();
         // Village comes from the SSC records and is shown for everyone.
         return new Profile(Card.of(a), v ? a.getBio() : null, v ? a.getQuote() : null,
-                Card.blank(a.getVillage()), Contact.of(a), v ? Socials.of(a) : List.of(),
+                Card.blank(a.getVillage()), Contact.of(a), v ? Socials.of(a) : List.of(), // memorials too: friends leave messages there
                 v ? a.getEducations().stream().map(e -> new EducationItem(e.getLevel(), e.getInstitution(), e.getSubject(), e.getPassingYear())).toList() : List.of(),
-                v ? a.getJobs().stream().map(j -> new JobItem(j.getTitle(), j.getOrganization(), j.getStartYear(), j.getEndYear())).toList() : List.of());
+                v ? a.getJobs().stream().map(j -> new JobItem(j.getTitle(), j.getOrganization(), j.getStartYear(), j.getEndYear())).toList() : List.of(),
+                a.getSex());
     }
 
     @GetMapping("/alumni/featured")
     public List<Profile> featured() {
         return repo.findByFeaturedTrueAndStatusOrderByName(Alumnus.Status.VERIFIED).stream()
-                .map(a -> new Profile(Card.of(a), a.getBio(), a.getQuote(), null, null, List.of(), List.of(), List.of())).toList();
+                .map(a -> new Profile(Card.of(a), a.getBio(), a.getQuote(), null, null, List.of(), List.of(), List.of(), null)).toList();
     }
 
     @GetMapping("/batches")
@@ -165,6 +166,26 @@ public class AlumniController {
         return repo.countriesOf(Alumnus.Status.VERIFIED);
     }
 
+    /** A member's comment, shown with their photo on the Events section. */
+    public record Comment(long id, String name, int batch, String group, String photo, String comment, java.time.Instant at, int likes) {}
+
+    /** Comments from joined members (not memorials), newest first. */
+    @GetMapping("/comments")
+    public List<Comment> comments() {
+        return repo.findTop30ByStatusAndDeceasedFalseAndBioIsNotNullOrderByUpdatedAtDescIdDesc(Alumnus.Status.VERIFIED).stream()
+                .filter(a -> !a.getBio().isBlank())
+                .map(a -> new Comment(a.getId(), a.getName(), a.getBatch(), a.getDepartment(), Card.blank(a.getPhotoUrl()), a.getBio().strip(), a.getUpdatedAt(), a.getLikes()))
+                .toList();
+    }
+
+    /** Like (or, with {@code ?undo=true}, unlike) a comment. Anonymous: the browser remembers its own like. */
+    @PostMapping("/comments/{id}/like")
+    @Transactional
+    public Map<String, Integer> like(@PathVariable long id, @RequestParam(defaultValue = "false") boolean undo) {
+        repo.addLike(id, undo ? -1 : 1);
+        return Map.of("likes", repo.findById(id).map(Alumnus::getLikes).orElse(0));
+    }
+
     /** Upcoming events, soonest first (today's events stay listed all day). */
     @GetMapping("/events")
     public List<EventItem> events() {
@@ -175,7 +196,8 @@ public class AlumniController {
 
     @GetMapping("/stats")
     public Stats stats() {
-        return new Stats(repo.countByStatusNot(Alumnus.Status.PENDING), repo.countPerBatch().size(), countries().size(), repo.countByStatus(Alumnus.Status.VERIFIED),
+        List<Object[]> perBatch = repo.countPerBatch(); // public records only, the same ones the directory shows
+        return new Stats(perBatch.stream().mapToLong(r -> (Long) r[1]).sum(), perBatch.size(), countries().size(), repo.countByStatus(Alumnus.Status.VERIFIED),
                 repo.firstRecordBatch());
     }
 
@@ -190,6 +212,7 @@ public class AlumniController {
             case "name" -> Sort.by("name");
             case "name-desc" -> Sort.by(Sort.Order.desc("name"));
             case "newest" -> Sort.by(Sort.Order.desc("batch"), Sort.Order.asc("id"));
+            case "joined" -> Sort.by(Sort.Order.desc("joinedAt"), Sort.Order.asc("id")); // last joined first
             case "oldest" -> Sort.by(Sort.Order.asc("batch"), Sort.Order.asc("id"));
             default -> Sort.by("id");
         };
@@ -202,21 +225,20 @@ public class AlumniController {
             return (r, query, cb) -> {
                 List<Predicate> p = new ArrayList<>();
                 p.add(cb.notEqual(r.get("status"), Alumnus.Status.PENDING));
+                p.add(cb.isNotNull(r.get("name"))); // 2022 on: roll-only records stay hidden until the student fills in their profile
                 if (!q.isEmpty()) {
                     String like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
-                    List<Predicate> any = new ArrayList<>(List.of(cb.like(cb.lower(r.get("name")), like, '\\'),
-                            verified(r, cb, cb.like(cb.lower(r.get("title")), like, '\\')),
-                            verified(r, cb, cb.like(cb.lower(r.get("organization")), like, '\\'))));
-                    // An SSC roll finds its student by exact match; the roll itself is never returned.
-                    if (q.matches("\\d{1,15}")) any.add(cb.equal(r.get("roll"), Long.parseLong(q)));
+                    List<Predicate> any = new ArrayList<>(List.of(cb.like(cb.lower(r.get("name")), like, '\\')));
+                    // ...or a Student ID, exact match
+                    if (q.matches("\\d{1,15}")) any.add(cb.equal(r.get("id"), AlumnusRepository.currentId(Long.parseLong(q))));
                     p.add(cb.or(any.toArray(Predicate[]::new)));
                 }
-                if (joined) p.add(cb.equal(r.get("status"), Alumnus.Status.VERIFIED));
+                if (joined) p.add(cb.and(cb.equal(r.get("status"), Alumnus.Status.VERIFIED), cb.isFalse(r.get("deceased"))));
                 if (batch > 0) p.add(cb.equal(r.get("batch"), batch));
                 else if (decade > 0) p.add(cb.between(r.get("batch"), decade, decade + 9));
                 if (!"group".equals(skip) && !groups.isEmpty()) p.add(r.get("department").in(groups));
                 if (!"field".equals(skip) && !fields.isEmpty()) p.add(verified(r, cb, r.get("industry").in(fields)));
-                if (!"blood".equals(skip) && !blood.isEmpty()) p.add(verified(r, cb, r.get("bloodGroup").in(blood)));
+                if (!"blood".equals(skip) && !blood.isEmpty()) p.add(verified(r, cb, cb.and(cb.isFalse(r.get("deceased")), r.get("bloodGroup").in(blood))));
                 if (!country.isEmpty()) p.add(verified(r, cb, cb.and(cb.isTrue(r.get("showLocation")), cb.equal(r.get("country"), country))));
                 return cb.and(p.toArray(Predicate[]::new));
             };

@@ -9,8 +9,6 @@ target/
 dist/
 node_modules/
 
-# Profile photos uploaded on the server: user data, not code
-NHS-Backend/uploads/
 
 # Server-only secrets (admin password hash)
 NHS-Backend/secrets.yaml

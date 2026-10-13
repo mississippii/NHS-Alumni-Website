@@ -1,14 +1,21 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { SCHOOL, THIS_YEAR } from '../api.js';
-import { Icon } from './ui.jsx';
+import { SCHOOL, THIS_YEAR } from '../lib/school.js';
+import { Icon } from './Icon.jsx';
 
 // Shared by the desktop nav and the phone tab bar.
 const NAV = [
   { to: '/', label: 'Home', icon: 'home' },
-  { to: '/directory', label: 'Alumni', icon: 'users' },
-  { to: '/batches', label: 'Batches', icon: 'layers' },
-  { to: '/#events', label: 'Events', icon: 'calendar' },
+  { to: '/alumni', label: 'Alumni', icon: 'users' },
+  { to: '/stories', label: 'Stories', icon: 'book' },
+  { to: '/events', label: 'Events', icon: 'calendar' },
+];
+// On /admin the same nav and tab bar switch to the admin sections.
+const ADMIN_NAV = [
+  { to: '/admin', label: 'Home', icon: 'home' },
+  { to: '/admin/notifications', label: 'Notifications', icon: 'bell' },
+  { to: '/admin/events', label: 'Events', icon: 'calendar' },
+  { to: '/admin/stories', label: 'Stories', icon: 'book' },
 ];
 
 function Crest({ className = 'crest' }) {
@@ -21,27 +28,25 @@ function Crest({ className = 'crest' }) {
   );
 }
 
+/** Red count on the admin Notifications link: join requests + stories waiting. */
+const Count = ({ n, bar }) => (n.to === '/admin/notifications' && bar?.waiting > 0
+  ? <b className="nav-count" aria-label={`${bar.waiting} waiting`}>{bar.waiting > 99 ? '99+' : bar.waiting}</b> : null);
+
 export default function Layout() {
   const { pathname, hash } = useLocation();
-  const [toast, setToast] = useState(null);
-  const here = pathname + hash;
+  const [adminBar, setAdminBar] = useState(null); // { waiting, logout } while an admin is logged in on /admin
   const isCurrent = to =>
-    to === '/' ? here === '/' : to.includes('#') ? here === to : pathname.startsWith(to) || (to === '/directory' && pathname.startsWith('/alumni'));
+    to === '/' || to === '/admin' ? pathname === to && !hash : pathname.startsWith(to) || (to === '/alumni' && pathname.startsWith('/directory'));
 
-  // Scroll to the hash target, or to the top, on every navigation.
+  // Scroll to the hash target (old /#events links), or to the top, on every navigation.
   useEffect(() => {
     const el = hash && document.getElementById(hash.slice(1));
     el ? el.scrollIntoView() : window.scrollTo(0, 0);
   }, [pathname, hash]);
 
-  useEffect(() => {
-    let t;
-    const on = e => { setToast(e.detail); clearTimeout(t); t = setTimeout(() => setToast(null), 2600); };
-    window.addEventListener('toast', on);
-    return () => { window.removeEventListener('toast', on); clearTimeout(t); };
-  }, []);
-
   const current = to => (isCurrent(to) ? 'page' : undefined);
+  const isAdmin = pathname.startsWith('/admin');
+  const nav = isAdmin ? ADMIN_NAV : NAV;
 
   return (
     <>
@@ -50,44 +55,46 @@ export default function Layout() {
         <div className="wrap">
           <Link className="brand" to="/" aria-label={`${SCHOOL.name} Alumni, home`}>
             <Crest />
-            <span className="brand-name"><b>{SCHOOL.name}</b><small>Alumni Network</small></span>
+            <span className="brand-name"><b>{SCHOOL.name}</b><small>{isAdmin ? 'Admin' : 'Alumni Network'}</small></span>
           </Link>
           <nav className="nav" aria-label="Main">
-            {NAV.map(n => <Link key={n.to} to={n.to} aria-current={current(n.to)}>{n.label}</Link>)}
-            <Link to="/about" aria-current={current('/about')}>About</Link>
+            {nav.map(n => <Link key={n.to} to={n.to} aria-current={current(n.to)}>{n.label}<Count n={n} bar={adminBar} /></Link>)}
+            {isAdmin ? <Link to="/">View site</Link> : <Link to="/about" aria-current={current('/about')}>About</Link>}
           </nav>
-          <Link className="header-action" to="/directory" aria-label="Search alumni"><Icon name="search" /></Link>
-          <Link className="btn btn-accent btn-sm header-join" to="/join" aria-current={current('/join')}>Join</Link>
+          {isAdmin && adminBar && <button className="btn btn-secondary btn-sm header-logout" type="button" onClick={adminBar.logout}>Log out</button>}
         </div>
       </header>
 
-      <main id="main" tabIndex={-1}><Outlet /></main>
+      {/* pages load on first visit (see main.jsx); the header and tab bar stay put meanwhile */}
+      <main id="main" tabIndex={-1}><Suspense fallback={null}><Outlet context={setAdminBar} /></Suspense></main>
 
+      {!isAdmin && (
       <footer className="footer">
         <div className="wrap">
           <div className="footer-top">
             <p className="footer-tag">Once a student, always family.</p>
             <div className="footer-brand">
               <Crest />
-              <div><b>{SCHOOL.name}</b><p>Alumni Association · Est. 1958</p></div>
+              <div><b>{SCHOOL.name}</b><p>{SCHOOL.city} · Est. {SCHOOL.est} · EIIN: {SCHOOL.eiin}</p>
+                <p>Contact: <a className="footer-mail" href={`mailto:${SCHOOL.email}`}>{SCHOOL.email}</a></p></div>
             </div>
           </div>
           <nav aria-label="Footer">
-            <Link to="/directory">Alumni directory</Link>
-            <Link to="/batches">Batches</Link>
-            <Link to="/#events">Events</Link>
+            <Link to="/alumni">Alumni</Link>
+            <Link to="/stories">Stories</Link>
+            <Link to="/events">Events</Link>
             <Link to="/about">About</Link>
           </nav>
           <p className="footer-bottom">© {THIS_YEAR} {SCHOOL.name} Alumni Association</p>
         </div>
       </footer>
+      )}
 
       <nav className="tabbar" aria-label="Main">
-        {NAV.map(n => (
-          <Link key={n.to} to={n.to} aria-current={current(n.to)}><Icon name={n.icon} />{n.label}</Link>
+        {nav.map(n => (
+          <Link key={n.to} to={n.to} aria-current={current(n.to)}><span className="tab-ic"><Icon name={n.icon} /><Count n={n} bar={adminBar} /></span>{n.label}</Link>
         ))}
       </nav>
-      {toast && <div className="toast" role="status">{toast}</div>}
     </>
   );
 }
