@@ -64,24 +64,24 @@ public class StoryController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    /** What a visitor sends. website is a honeypot: hidden on the page, so only bots fill it. */
-    public record Submission(String name, String contact, Long studentId, Integer batch, String kind, String title,
-                             String body, String website) {}
+    /** What a student sends: their own student ID, so the admin sees whose story it is. website is a honeypot: hidden on the page, so only bots fill it. */
+    public record Submission(Long studentId, String body, String website) {}
 
     /** "Share a story": multipart with "form" (JSON) and an optional "photo". Waits for the admin's approval. */
     @PostMapping("/submit")
     @Transactional
     public void submit(@RequestPart("form") Submission f, @RequestPart(value = "photo", required = false) MultipartFile photo) throws IOException {
         if (f.website() != null && !f.website().isBlank()) return; // a bot: pretend it worked
-        if (blank(f.name()) || blank(f.contact()) || blank(f.title()) || blank(f.body()))
-            throw bad("Your name, a phone or email, a headline and the story are required.");
+        if (f.studentId() == null || blank(f.body())) throw bad("Your story and your student ID are required.");
         if (f.body().length() > 10000) throw bad("The story is too long (max 10,000 characters).");
+        Alumnus a = alumni.findById(f.studentId()).filter(x -> x.getStatus() != Alumnus.Status.PENDING)
+                .orElseThrow(() -> bad("No student with ID " + f.studentId() + "."));
+        if (a.getName() == null) throw bad("Add your name to your profile first (Update my profile), then share your story.");
         if (stories.countByStatus(Story.Status.PENDING) >= MAX_PENDING)
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Many stories are waiting for review. Please try again in a few days.");
         Story s = new Story();
         s.setStatus(Story.Status.PENDING);
-        fill(s, f.studentId(), f.name(), f.batch(), f.kind(), f.title(), null, null, f.body());
-        s.setContact(clip(f.contact(), 120));
+        fill(s, a.getId(), null, null, null, headline(f.body()), null, null, f.body());
         s.setPublished(LocalDate.now());
         stories.save(s);
         savePhoto(s, photo);
@@ -113,6 +113,12 @@ public class StoryController {
         } catch (IllegalArgumentException e) {
             throw bad(e.getMessage());
         }
+    }
+
+    /** No headline on the share form: the story's first sentence stands in; the admin can change it before approving. */
+    static String headline(String body) {
+        String first = body.strip().split("(?<=[.!?।])\\s|\\n", 2)[0].strip();
+        return first.length() > 100 ? first.substring(0, 99).strip() + "…" : first;
     }
 
     static boolean blank(String s) {

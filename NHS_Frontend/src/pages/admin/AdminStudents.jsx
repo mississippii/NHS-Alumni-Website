@@ -159,7 +159,7 @@ export default function AdminStudents({ token }) {
             <Field label="Occupation"><input className="input" maxLength={120} placeholder="e.g. Software Engineer" value={f.title} onChange={set('title')} /></Field>
             <Field label="Organization"><input className="input" maxLength={120} placeholder="Company, office or institute" value={f.org} onChange={set('org')} /></Field>
             <Field label="Current city"><input className="input" maxLength={80} value={f.city} onChange={set('city')} /></Field>
-            <Field label="Country"><input className="input" maxLength={80} value={f.country} onChange={set('country')} /></Field>
+            <Field label="Current country"><input className="input" maxLength={80} value={f.country} onChange={set('country')} /></Field>
             <Field label="About" wide>
               <textarea className="input textarea" rows="4" maxLength={2000} value={f.bio} onChange={set('bio')} />
             </Field>

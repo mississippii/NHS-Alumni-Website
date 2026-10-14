@@ -38,6 +38,9 @@ export const checkRoll = (id, roll) => post(`/alumni/${id}/roll`, { roll: +roll 
 export const findByRoll = (batch, group, roll) => post('/roll', { batch: +batch, group, roll: +roll });
 /** Profile form, step 1: checks the form and emails a PIN. id = null for a new member (join). Errors carry the server's reason. */
 export const requestPin = (id, form) => post(id ? `/alumni/${id}/pin` : '/alumni/join/pin', form);
+/** "Edit profile" on a claimed profile: a PIN to the saved email → { email: masked }; then the PIN → its private fields. */
+export const unlockProfile = id => post(`/alumni/${id}/unlock`, {});
+export const checkUnlock = (id, pin) => post(`/alumni/${id}/unlock/check`, { pin });
 /** Step 2: save with the PIN from the email. */
 export async function saveProfile(id, form, photo) {
   const body = new FormData();
@@ -52,5 +55,12 @@ export const sendHelp = (id, form) => post(`/alumni/${id}/help`, form);
 /** Success stories, most recent first: the website shows the latest `limit`. */
 export const listStories = (limit = 12) => get(`/stories?limit=${limit}`);
 export const getStory = id => get(`/stories/${id}`, { notFound: null });
-/** "Share a story": waits for the admin. form = { name, contact, batch, kind, title, body, website (honeypot) }. */
+/** "Share a story": waits for the admin. form = { studentId, body, website (honeypot) }. */
 export const submitStory = (form, photo) => sendForm('/stories/submit', {}, form, photo);
+/** The footer's visitor number: counts this browser once a day (the day is remembered here), else just reads it. */
+export function visits() {
+  const today = new Date().toDateString();
+  let seen = null;
+  try { seen = localStorage.getItem('nhs-visit'); localStorage.setItem('nhs-visit', today); } catch { /* private mode: counts each load */ }
+  return seen === today ? get('/visits') : post('/visits');
+}

@@ -47,7 +47,16 @@ public class ProfileController {
     public record Form(String email, String pin, String name, Integer batch, String group,
                        String phone, String bloodGroup, String title, String org, String industry, String city, String country,
                        String bio, Boolean showPhone, Boolean showEmail, List<EducationIn> education, Map<String, String> socials,
-                       String village, Long roll, java.time.LocalDate birthDate, String sex) {}
+                       String village, Long roll, java.time.LocalDate birthDate, String sex,
+                       String emailPin) { // the PIN sent to a new email, when the owner changes it
+        public Form(String email, String pin, String name, Integer batch, String group,
+                    String phone, String bloodGroup, String title, String org, String industry, String city, String country,
+                    String bio, Boolean showPhone, Boolean showEmail, List<EducationIn> education, Map<String, String> socials,
+                    String village, Long roll, java.time.LocalDate birthDate, String sex) {
+            this(email, pin, name, batch, group, phone, bloodGroup, title, org, industry, city, country, bio, showPhone, showEmail,
+                    education, socials, village, roll, birthDate, sex, null);
+        }
+    }
 
     private static final Set<String> BLOOD = Set.of("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-");
     private static final Set<String> EDU_TYPES = Set.of("College", "University");
@@ -84,18 +93,55 @@ public class ProfileController {
         return Map.of("status", "SENT");
     }
 
-    /** Submit pressed: check the form, then email a PIN to the address in it. Nothing is saved yet. */
+    /**
+     * Submit pressed: check the form, then email a PIN to the address in it. Nothing is saved yet. On a claimed profile
+     * this only happens for a new email (proves it's real); the saved email's PIN came from "Edit profile".
+     */
     @PostMapping("/alumni/{id}/pin")
     @Transactional(readOnly = true)
     public Map<String, String> pin(@PathVariable long id, @RequestBody Form f) {
         Alumnus a = find(id);
         rollCheck(a, f.roll());
-        String email = owner(a, f.email());
+        String email = a.isVerified() && a.getEmail() != null ? newEmail(a, f.email()) : owner(a, f.email());
         if (a.getName() == null) fullName(f);
         sex(a, f.sex());
         apply(new Alumnus(), f); // throwaway copy: only to report mistakes before the PIN is sent
         pins.send(email);
         return Map.of("status", "SENT");
+    }
+
+    /** "Edit profile" on a claimed profile, step 1: a PIN to the saved email. Returns it masked ("t***@gmail.com"). */
+    @PostMapping("/alumni/{id}/unlock")
+    @Transactional(readOnly = true)
+    public Map<String, String> unlock(@PathVariable long id) {
+        String email = claimedEmail(find(id));
+        if (!pins.recent(email)) pins.send(email); // Edit tapped again within a minute: the PIN already sent still works
+        return Map.of("email", email.charAt(0) + "***" + email.substring(email.indexOf('@')));
+    }
+
+    public record PinIn(String pin) {}
+    public record Private(String email, String phone, java.time.LocalDate birthDate, boolean showPhone) {}
+
+    /** Step 2: PIN right = the form opens with the private fields filled. The same PIN saves it within the hour (see submit). */
+    @PostMapping("/alumni/{id}/unlock/check")
+    @Transactional(readOnly = true)
+    public Private unlockCheck(@PathVariable long id, @RequestBody PinIn in) {
+        Alumnus a = find(id);
+        pins.check(claimedEmail(a), in.pin(), false);
+        return new Private(a.getEmail(), a.getPhone(), a.getBirthDate(), a.isShowPhone());
+    }
+
+    /** The email typed on a claimed profile: the saved one, or a new one that no other profile uses. */
+    private String newEmail(Alumnus a, String raw) {
+        String e = email(raw);
+        if (!e.equalsIgnoreCase(a.getEmail()) && repo.existsByEmailIgnoreCase(e))
+            throw bad(HttpStatus.CONFLICT, "This email already belongs to another profile.");
+        return e.equalsIgnoreCase(a.getEmail()) ? a.getEmail() : e;
+    }
+
+    private static String claimedEmail(Alumnus a) {
+        if (!a.isVerified() || a.getEmail() == null) throw bad(HttpStatus.CONFLICT, "This profile isn’t claimed yet. Use “Update my profile”.");
+        return a.getEmail();
     }
 
     /**
@@ -134,13 +180,17 @@ public class ProfileController {
                                       @RequestPart(value = "photo", required = false) MultipartFile photo) throws IOException {
         Alumnus a = find(id);
         rollCheck(a, f.roll());
-        String email = owner(a, f.email());
+        // claimed: the PIN went to the saved email; a new email also needs the PIN sent to it (so a typo can't lock them out)
+        String email = a.isVerified() && a.getEmail() != null ? a.getEmail() : owner(a, f.email());
+        String newEmail = a.isVerified() && a.getEmail() != null ? newEmail(a, f.email()) : email;
         if (a.getName() == null) a.setName(fullName(f));
         a.setSex(sex(a, f.sex()));
         apply(a, f); // validate everything before spending the PIN
         BufferedImage img = image(photo);
+        if (!newEmail.equals(email)) pins.check(newEmail, f.emailPin(), false); // both right before either is used up
         pins.check(email, f.pin(), true);
-        a.setEmail(email);
+        if (!newEmail.equals(email)) pins.check(newEmail, f.emailPin(), true);
+        a.setEmail(newEmail);
         if (img != null) a.setPhotoUrl(photos.save(id, img, 0.5, 0.4, 1));
         a.setUpdatedAt(java.time.Instant.now());
         if (!a.isVerified()) a.setJoinedAt(a.getUpdatedAt()); // later edits keep their place in "Recently joined"

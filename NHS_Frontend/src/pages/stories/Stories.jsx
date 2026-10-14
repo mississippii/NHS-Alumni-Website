@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listStories } from '../../api/public.js';
 import { Icon } from '../../components/Icon.jsx';
-import { Empty, PageHeader } from '../../components/page.jsx';
+import { Empty } from '../../components/page.jsx';
 import { paragraphs } from '../../lib/format.js';
 import { useAsync, useTitle } from '../../lib/hooks.js';
 import Article, { previewCount } from './Article.jsx';
@@ -31,10 +31,12 @@ export default function Stories() {
   const { data: list, loading, error } = useAsync(() => listStories(SHOWN), []);
   return (
     <>
-      <PageHeader crumbs={[[null, 'Stories']]} title="Alumni stories"
-        desc="Success stories and batch memories from the people who once sat in Nimsar High School’s classrooms.">
-        <div><Link className="btn btn-primary btn-sm" to="/stories/share">Share a story</Link></div>
-      </PageHeader>
+      <header className="page-header">
+        <div className="wrap stories-head">
+          <h1 className="page-title">Stories</h1>
+          <Link className="btn btn-primary btn-sm" to="/stories/share"><Icon name="edit" />Share a story</Link>
+        </div>
+      </header>
       <section className="section stories-page">
         <div className="wrap story-paper">
           {loading ? <div className="skeleton skel-block" aria-busy="true" />

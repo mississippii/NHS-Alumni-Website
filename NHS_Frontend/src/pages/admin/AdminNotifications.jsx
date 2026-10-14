@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { approveJoin, approveStory, deleteIssue, deleteStory, rejectJoin } from '../../api/admin.js';
 import { Avatar } from '../../components/Avatar.jsx';
 import { Empty } from '../../components/page.jsx';
@@ -70,12 +70,13 @@ export default function AdminNotifications({ token, joins, setJoins, stories, re
         <section key={s.id} className="card card-pad admin-story">
           {s.photo ? <img className="story-thumb" src={s.photo} alt="" /> : <Avatar person={{ name: s.name, group: s.group }} size="lg" />}
           <div>
-            <span className="story-tag">{s.kind} · sent {s.published}</span>
+            <span className="story-tag">sent {s.published}</span>
             <b>{s.title}</b>
-            <span className="text-2">{storyName(s)}{s.batch ? ` · Batch ${s.batch}` : ''}{contact ? ` · ${contact}` : ''}</span>
+            <span className="text-2">{storyName(s)}{s.alumnusId ? ` · Student ID ${studentId(s.alumnusId)}` : ''}{s.batch ? ` · Batch ${s.batch}` : ''}{s.group ? ` · ${s.group}` : ''}{contact ? ` · ${contact}` : ''}</span>
             <p className="admin-bio">{excerpt(s.body, 400)}</p>
             <div className="admin-actions">
               <button className="btn btn-primary btn-sm" type="button" disabled={busy === s.id} onClick={() => act(approveStory, s.id, reloadStories)}>Approve</button>
+              {s.alumnusId && <Link className="btn btn-secondary btn-sm" to={`/alumni/${studentId(s.alumnusId)}`}>View profile</Link>}
               <button className="btn btn-ghost btn-sm" type="button" disabled={busy === s.id}
                 onClick={() => window.confirm(`Reject “${s.title}”?`) && act(deleteStory, s.id, reloadStories)}>Reject</button>
             </div>

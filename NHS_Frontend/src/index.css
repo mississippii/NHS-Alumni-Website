@@ -361,7 +361,6 @@ button { font: inherit; color: inherit; }
 .batch-year { font: 400 var(--t-3xl)/1 var(--f-display); letter-spacing: -.01em; }
 .batch-count { font-size: var(--t-sm); color: var(--text-2); }
 .batch-count b { color: var(--text); font-weight: 600; }
-.batch.is-jubilee { border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface)); }
 .batch-skel { height: 118px; }
 
 .gbar { display: flex; height: 6px; border-radius: var(--r-full); overflow: hidden; background: var(--surface-2); gap: 2px; }
@@ -372,7 +371,12 @@ button { font: inherit; color: inherit; }
 .legend { display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-4); font-size: var(--t-sm); color: var(--text-2); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 10px; height: 10px; border-radius: 3px; }
-.batch-search { max-width: 420px; margin-top: var(--s-2); }
+.batch-search { max-width: 420px; width: 100%; justify-self: end; }
+/* Alumni page: the title and the search box share one line */
+.page-header:has(.batch-search) .wrap { grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s-4); align-items: center; }
+.page-header:has(.batch-search) .breadcrumb { grid-column: 1 / -1; }
+.search-by { display: flex; gap: var(--s-2); }
+.search-by > .input-icon { flex: 1; min-width: 0; }
 .page-header:has(.batch-search) .wrap { padding-block: var(--s-4); }
 @media (min-width: 960px) { .page-header:has(.batch-search) .wrap { padding-block: var(--s-6) var(--s-5); } }
 .batches-page { padding-block: var(--s-4) var(--s-8); }
@@ -731,6 +735,7 @@ button { font: inherit; color: inherit; }
 .footer-tag { font: 400 clamp(1.75rem, 1.3rem + 2vw, 2.75rem)/1.1 var(--f-display); max-width: 18ch; }
 .footer-brand p, .footer nav, .footer-bottom { color: var(--hero-text-2); }
 .footer nav a:hover { color: var(--hero-text); }
+.footer-count { margin-left: auto; opacity: .55; }
 .footer-bottom { border-top-color: rgb(255 255 255 / .12); }
 @media (min-width: 960px) {
   .footer .wrap { align-items: end; }
@@ -835,11 +840,8 @@ button { font: inherit; color: inherit; }
   border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); color: #F4F2E9;
   font: 400 clamp(1.8rem, 6vw, 3.2rem)/1 var(--f-display); background: rgb(0 0 0 / .18); backdrop-filter: blur(2px);
 }
-.story-chip {
-  justify-self: start; width: max-content; padding: 4px 10px; border-radius: var(--r-full);
-  background: var(--accent); color: #1A1405; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-}
-
+.page-header .stories-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.stories-head .page-title { margin: 0; }
 .story-tag { font-size: var(--t-xs); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-text); }
 .story-by { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2); }
 .story-by > span { display: grid; min-width: 0; font-size: var(--t-sm); }
@@ -894,17 +896,13 @@ button { font: inherit; color: inherit; }
 @media (min-width: 640px) { .story-foot { grid-column: auto; } .story-about { grid-template-columns: auto 1fr auto; } }
 .story-skel { padding-block: var(--s-8); max-width: 760px; }
 
-.kind-pick { display: grid; gap: var(--s-2); border: 0; padding: 0; margin: 0; }
-.kind-pick legend { margin-bottom: var(--s-2); }
-@media (min-width: 640px) { .kind-pick { grid-template-columns: 1fr 1fr; } }
-.kind { display: grid; grid-template-columns: auto 1fr; column-gap: var(--s-3); align-items: center; padding: var(--s-3) var(--s-4); border: 1px solid var(--border-strong); border-radius: var(--r-md); cursor: pointer; }
-.kind .ic { grid-row: span 2; color: var(--text-3); }
-.kind small { color: var(--text-2); font-size: var(--t-xs); }
-.kind.on { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 0 0 1px var(--brand); }
-.kind.on .ic { color: var(--brand-text); }
-.kind:has(:focus-visible) { outline: 2px solid var(--brand); outline-offset: 2px; }
 .story-input { min-height: 220px; }
 .story-thumb { width: 96px; height: 64px; object-fit: cover; border-radius: var(--r-sm); }
+/* share form: student ID and the photo button on one row */
+.share-row { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s-3); }
+.share-row .field { flex: 1 1 150px; }
+.share-photo { flex: none; gap: var(--s-2); }
+.share-photo .story-thumb { width: 40px; height: 40px; }
 
 .admin-who { display: flex; align-items: center; gap: var(--s-2); margin: 0; font-size: var(--t-sm); }
 .admin-story { display: grid; grid-template-columns: auto 1fr; gap: var(--s-4); align-items: start; }
@@ -972,7 +970,6 @@ button { font: inherit; color: inherit; }
 .events-empty { padding: var(--s-3) var(--s-4); }
 .empty { padding: var(--s-8) var(--s-4); }
 .note, .admin-bio { padding: 10px var(--s-3); }
-.kind { padding: 10px var(--s-3); }
 .story-about { margin-top: var(--s-6); padding: var(--s-4); }
 .carousel-track > * { flex-basis: min(78%, 260px); }
 
@@ -1150,3 +1147,17 @@ button { font: inherit; color: inherit; }
 /* profile "Help" button and its form */
 .profile-edit, .claim-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
 .help-dialog textarea { resize: vertical; text-align: left; }
+/* ⋮ menu next to a claimed profile's name */
+.more { position: relative; margin-left: auto; flex: none; }
+.more-btn { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: none; color: var(--text-2); cursor: pointer; }
+.more-btn:hover, .more-btn[aria-expanded="true"] { background: var(--surface-2, rgb(127 127 127 / .12)); }
+.more-menu { position: absolute; right: 0; top: 100%; z-index: 20; min-width: 170px; padding: 6px; border-radius: var(--r-md, 10px);
+  background: var(--surface); box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
+.more-menu a, .more-menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px;
+  background: none; color: var(--text); font: inherit; font-size: var(--t-sm); text-decoration: none; cursor: pointer; }
+.more-menu a:hover, .more-menu button:hover { background: var(--surface-2, rgb(127 127 127 / .12)); }
+.more-menu .ic { width: 18px; height: 18px; color: var(--text-2); }
+/* after Save: a short spinner before going back to the profile */
+.saving { display: grid; place-items: center; min-height: 50vh; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

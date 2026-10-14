@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getStats, requestPin, saveProfile } from '../../api/public.js';
 import { Avatar } from '../../components/Avatar.jsx';
 import { BloodPicker } from '../../components/form/BloodPicker.jsx';
@@ -27,7 +27,8 @@ function SexField({ value, onChange }) {
   );
 }
 /** The profile form itself: photo, record fields, contact, work, education, links, comment; Submit sends a PIN to confirm. */
-export default function ProfileForm({ id, person, start, moved }) {
+/** pin = already checked by "Edit profile" (claimed profiles): Save goes straight through. */
+export default function ProfileForm({ id, person, start, moved, pin }) {
   const [f, setF] = useState(start.form);
   const [edu, setEdu] = useState(start.edu);
   const [socials, setSocials] = useState(start.socials);
@@ -41,6 +42,13 @@ export default function ProfileForm({ id, person, start, moved }) {
   const stats = useAsync(getStats, []);
   const lastJoin = (stats.data?.firstRecordBatch ?? 2006) - 1;
   useEffect(() => () => photo && URL.revokeObjectURL(photo.url), [photo]);
+  // saved: a short spinner, then straight back to the profile
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!done || !person) return;
+    const t = setTimeout(() => navigate(`/alumni/${studentId(id)}`, { replace: true }), 700);
+    return () => clearTimeout(t);
+  }, [done, person, id, navigate]);
 
   const pickPhoto = async e => {
     const file = e.target.files[0];
@@ -66,7 +74,10 @@ export default function ProfileForm({ id, person, start, moved }) {
     e.preventDefault();
     setBusy(true); setError(null);
     try {
-      await requestPin(id, payload(null));
+      // Edit profile: already unlocked, so save at once, unless the email changed: then a PIN to the new one first
+      const moved = pin && f.email.trim().toLowerCase() !== start.form.email.toLowerCase();
+      if (pin && !moved) return setDone(await saveProfile(id, payload(pin), photo?.blob));
+      await requestPin(id, payload(pin));
       setPinOpen(true);
     } catch (err) {
       setError(err.message);
@@ -83,14 +94,7 @@ export default function ProfileForm({ id, person, start, moved }) {
       </Empty>
     </div></div>
   );
-  if (done) return (
-    <div className="wrap section"><div className="card">
-      <Empty icon="verified" title={person ? 'Your profile is updated' : 'Welcome to the network!'}
-        action={<Link className="btn btn-primary" to={`/alumni/${studentId(id || done.id)}`}>View my profile</Link>}>
-        Batchmates can see your details now. To change them later, open your profile and tap “Edit profile”.
-      </Empty>
-    </div></div>
-  );
+  if (done) return <div className="wrap section saving" aria-busy="true"><span className="spinner" role="status" aria-label="Saving" /></div>;
 
   return (
     <>
@@ -172,7 +176,7 @@ export default function ProfileForm({ id, person, start, moved }) {
 
           <div className="form-part">
             <div className="form-grid">
-              <Field label="Email" hint={person?.joined ? 'The one saved on your profile · always shown' : 'We’ll send a PIN here · shown on your profile'} wide required>
+              <Field label="Email" hint={person?.joined ? 'Shown on your profile · a new one gets a PIN to confirm it' : 'We’ll send a PIN here · shown on your profile'} wide required>
                 <input className="input" type="email" required maxLength={120} autoComplete="email" value={f.email} onChange={set('email')} />
               </Field>
               <Field label="Phone" wide required>
@@ -202,7 +206,7 @@ export default function ProfileForm({ id, person, start, moved }) {
               <Field label="Occupation"><input className="input" placeholder="e.g. Software Engineer" value={f.title} onChange={set('title')} /></Field>
               <Field label="Organization"><input className="input" placeholder="Company, office or institute" value={f.org} onChange={set('org')} /></Field>
               <Field label="Current city"><input className="input" autoComplete="address-level2" value={f.city} onChange={set('city')} /></Field>
-              <Field label="Country"><input className="input" autoComplete="country-name" value={f.country} onChange={set('country')} /></Field>
+              <Field label="Current country"><input className="input" autoComplete="country-name" value={f.country} onChange={set('country')} /></Field>
             </div>
           </div>
 
@@ -224,15 +228,15 @@ export default function ProfileForm({ id, person, start, moved }) {
 
         <div className="form-submit">
           {error && <p className="err" role="alert">{error}</p>}
-          <p className="text-2">We’ll email you a PIN to confirm.</p>
-          <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? 'Sending PIN…' : 'Submit'}</button>
+          {!pin && <p className="text-2">We’ll email you a PIN to confirm.</p>}
+          <button className="btn btn-primary" type="submit" disabled={busy}>{pin ? (busy ? 'Saving…' : 'Save') : busy ? 'Sending PIN…' : 'Submit'}</button>
         </div>
       </form>
 
       {pinOpen && (
         <PinDialog email={f.email} onClose={() => setPinOpen(false)}
-          onResend={() => requestPin(id, payload(null))}
-          onConfirm={async pin => setDone(await saveProfile(id, payload(pin), photo?.blob))} />
+          onResend={() => requestPin(id, payload(pin))}
+          onConfirm={async p => setDone(await saveProfile(id, pin ? { ...payload(pin), emailPin: p } : payload(p), photo?.blob))} />
       )}
     </>
   );

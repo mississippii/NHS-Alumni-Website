@@ -3,7 +3,7 @@ import { Icon } from '../../components/Icon.jsx';
 
 const RESEND_SECONDS = 60;
 /** The "enter your PIN" box. Native <dialog>: focus trap, Escape and the backdrop come with it. */
-export default function PinDialog({ email, onClose, onConfirm, onResend }) {
+export default function PinDialog({ email, onClose, onConfirm, onResend, busyText = 'Saving…', closeLabel = 'Change email' }) {
   const ref = useRef(null);
   const [pin, setPin] = useState('');
   const [busy, setBusy] = useState(false);
@@ -29,13 +29,13 @@ export default function PinDialog({ email, onClose, onConfirm, onResend }) {
       <form onSubmit={confirm}>
         <span className="pin-icon"><Icon name="mail" /></span>
         <h2 id="pin-title">Check your email</h2>
-        <p className="text-2">We sent a 6-digit PIN to <b>{email}</b>. It works for 10 minutes.</p>
+        <p className="text-2">We sent a 6-digit PIN to <b>{email}</b>. It works for 3 minutes.</p>
         <input className="input pin-input num" required autoFocus inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}"
           maxLength={6} placeholder="••••••" aria-label="PIN" value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, ''))} />
         {msg && <p className={msg.err ? 'err' : 'text-2'} role={msg.err ? 'alert' : 'status'}>{msg.text}</p>}
-        <button className="btn btn-primary btn-block" type="submit" disabled={busy || pin.length !== 6}>{busy ? 'Saving…' : 'Confirm'}</button>
+        <button className="btn btn-primary btn-block" type="submit" disabled={busy || pin.length !== 6}>{busy ? busyText : 'Confirm'}</button>
         <div className="pin-actions">
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => ref.current.close()}>Change email</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => ref.current.close()}>{closeLabel}</button>
           <button type="button" className="btn btn-ghost btn-sm" onClick={resend} disabled={busy || wait > 0}>
             {wait > 0 ? `Resend in ${wait}s` : 'Resend PIN'}
           </button>

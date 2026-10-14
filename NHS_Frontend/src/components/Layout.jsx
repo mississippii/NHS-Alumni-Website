@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { visits } from '../api/public.js';
 import { SCHOOL, THIS_YEAR } from '../lib/school.js';
 import { Icon } from './Icon.jsx';
 
@@ -35,6 +36,8 @@ const Count = ({ n, bar }) => (n.to === '/admin/notifications' && bar?.waiting >
 export default function Layout() {
   const { pathname, hash } = useLocation();
   const [adminBar, setAdminBar] = useState(null); // { waiting, logout } while an admin is logged in on /admin
+  const [visitCount, setVisitCount] = useState(0);
+  useEffect(() => { visits().then(v => setVisitCount(v.total), () => {}); }, []);
   const isCurrent = to =>
     to === '/' || to === '/admin' ? pathname === to && !hash : pathname.startsWith(to) || (to === '/alumni' && pathname.startsWith('/directory'));
 
@@ -84,6 +87,7 @@ export default function Layout() {
             <Link to="/stories">Stories</Link>
             <Link to="/events">Events</Link>
             <Link to="/about">About</Link>
+            {visitCount > 0 && <span className="footer-count num">{visitCount.toLocaleString()}</span>}
           </nav>
           <p className="footer-bottom">© {THIS_YEAR} {SCHOOL.name} Alumni Association</p>
         </div>

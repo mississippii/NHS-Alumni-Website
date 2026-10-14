@@ -47,6 +47,7 @@ class AlumniApiTests {
     @Autowired AdminController admin;
     @Autowired org.example.nhsbkend.controller.StoryController stories;
     @Autowired PinService pins;
+    @Autowired org.example.nhsbkend.controller.VisitController visits;
     @Autowired org.example.nhsbkend.service.PhotoService photos;
     @Autowired org.example.nhsbkend.controller.ReplyController replyApi;
     @Autowired org.example.nhsbkend.repository.ReplyRepository replyRepo;
@@ -340,7 +341,7 @@ class AlumniApiTests {
         assertEquals("VERIFIED", form.submit(id, form("t@example.com", pin, good), null).get("status")); // PIN right = live
         assertThrows(err, () -> form.submit(id, form("t@example.com", pin, good), null)); // PIN used up
 
-        assertThrows(err, () -> form.pin(id, form("other@example.com", null, null))); // claimed: other emails locked out
+        assertThrows(err, () -> form.submit(id, form("other@example.com", "123456", null), null)); // claimed: no saved-email PIN, no save
         var noPhone = new ProfileController.Form("t@example.com", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, java.time.LocalDate.of(1999, 5, 1), "MALE");
         assertThrows(err, () -> form.pin(id, noPhone)); // phone is required
         var g = form("t@example.com", null, null);
@@ -371,6 +372,24 @@ class AlumniApiTests {
         form.pin(id, form("t@example.com", null, null));
         form.submit(id, form("t@example.com", pinFor("t@example.com"), null, "Korpai"), null);
         assertEquals("Korpai", api.profile(id).village()); // the owner can correct it
+
+        // "Edit profile": PIN to the saved email first, then the form (private fields filled); a new email can be saved
+        ((java.util.Map<?, ?>) getField(pins, "pins")).clear();
+        assertEquals("t***@example.com", form.unlock(id).get("email"));
+        String up = pinFor("t@example.com");
+        assertThrows(err, () -> form.unlockCheck(id, new ProfileController.PinIn("000000".equals(up) ? "111111" : "000000")));
+        assertEquals(java.time.LocalDate.of(1999, 5, 1), form.unlockCheck(id, new ProfileController.PinIn(up)).birthDate());
+        assertEquals("t***@example.com", form.unlock(id).get("email")); // tapped Edit again: no new mail, same PIN
+        assertEquals(up, pinFor("t@example.com"));
+        var moved = form("New@Example.com", up, null, "Korpai");
+        assertThrows(err, () -> form.submit(id, moved, null)); // new email: its own PIN needed too
+        form.pin(id, moved);
+        String np = pinFor("new@example.com");
+        var withPin = new ProfileController.Form(moved.email(), up, null, null, null, moved.phone(), null, null, null, null, null, null, null,
+                true, true, List.of(), null, "Korpai", null, moved.birthDate(), "MALE", np);
+        form.submit(id, withPin, null);
+        assertEquals("new@example.com", api.profile(id).contact().email());
+        assertThrows(err, () -> form.unlock(id + 1)); // not claimed / not found
 
         // added from a result sheet with only the roll: the name comes from the student when they claim it
         var noName = new org.example.nhsbkend.entity.Alumnus();
@@ -507,19 +526,21 @@ class AlumniApiTests {
         assertEquals("Salma Akter", s.name()); // from the student record
         assertEquals(2014, s.batch());         // and the batch too
 
-        // a visitor's batch memory waits for approval; the contact stays private
-        assertThrows(err, () -> stories.submit(new StoryController.Submission("Rahim", "", null, 2005, "Batch memory", "T", "B", null), null));
-        stories.submit(new StoryController.Submission("Rahim", "01711000000", null, 2005, "Batch memory", "Our last day", "We sang.", null), null);
-        stories.submit(new StoryController.Submission("Bot", "x", null, null, null, "spam", "spam", "http://spam"), null); // honeypot
+        // a student's story waits for approval, under their student ID; the contact stays private
+        assertThrows(err, () -> stories.submit(new StoryController.Submission(null, "B", null), null)); // no ID
+        assertThrows(err, () -> stories.submit(new StoryController.Submission(999L, "B", null), null)); // no such student
+        stories.submit(new StoryController.Submission(sid, "Our last day. We sang.", null), null); // headline = first sentence
+        stories.submit(new StoryController.Submission(null, "spam", "http://spam"), null); // honeypot
         assertEquals(List.of("From Nimsar to BUET"), stories.stories(12).stream().map(StoryController.StoryItem::title).toList());
         var all = admin.allStories("test");
         assertEquals(List.of("PENDING", "PUBLISHED"), all.stream().map(AdminController.AdminStory::status).toList()); // waiting first
         var memory = all.get(0).story();
-        assertEquals("01711000000", all.get(0).contact());
+        assertEquals("Our last day.", memory.title());
         assertThrows(err, () -> stories.story(memory.id())); // not public yet
         admin.approveStory("test", memory.id());
-        assertEquals(List.of("Our last day", "From Nimsar to BUET"), stories.stories(12).stream().map(StoryController.StoryItem::title).toList()); // newest first
-        assertEquals(2005, stories.story(memory.id()).batch());
+        assertEquals(List.of("Our last day.", "From Nimsar to BUET"), stories.stories(12).stream().map(StoryController.StoryItem::title).toList()); // newest first
+        assertEquals(sid, stories.story(memory.id()).alumnusId());
+        assertEquals("Salma Akter", stories.story(memory.id()).name()); // name and batch come from the profile
         assertEquals(1, stories.stories(1).size()); // the website's fixed number
 
         admin.saveStory("test", new AdminController.StoryForm(s.id(), sid, null, null, null, "New title", null, null, "Body", false), null);
@@ -615,5 +636,13 @@ class AlumniApiTests {
         assertEquals("MALE", ProfileController.sex(new Alumnus(), " male "));
         assertThrows(org.springframework.web.server.ResponseStatusException.class, () -> ProfileController.sex(new Alumnus(), null)); // required when unknown
         assertThrows(org.springframework.web.server.ResponseStatusException.class, () -> ProfileController.sex(new Alumnus(), "x"));
+    }
+
+    @Test
+    void visitsCountUp() {
+        long before = visits.total().get("total");
+        assertEquals(before + 1, visits.visit().get("total")); // the first one creates the counter if needed
+        assertEquals(before + 2, visits.visit().get("total"));
+        assertEquals(before + 2, visits.total().get("total")); // reading doesn't count
     }
 }

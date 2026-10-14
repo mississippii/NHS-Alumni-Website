@@ -35,7 +35,6 @@ export default function Story() {
         <aside className="card story-about">
           <Avatar person={person(s)} size="lg" />
           <div>
-            <small>{s.kind === 'Batch memory' && !s.alumnusId ? 'Shared by' : 'About'}</small>
             <b>{storyName(s)}</b>
             <span>{[s.role, tag(s)].filter(Boolean).join(' · ')}</span>
           </div>

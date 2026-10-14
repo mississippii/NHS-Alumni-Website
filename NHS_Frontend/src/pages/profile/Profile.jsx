@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getAlumnus } from '../../api/public.js';
 import { Avatar } from '../../components/Avatar.jsx';
@@ -12,6 +12,30 @@ import HelpDialog from './HelpDialog.jsx';
 /** One row of the profile card: icon, small label, value. */
 function Row({ icon, label, children, tone = '' }) {
   return <li><span className={`tl-icon ${tone}`}><Icon name={icon} /></span><span><small>{label}</small>{children}</span></li>;
+}
+
+/** ⋮ next to the name of a claimed profile: Edit profile (needs the email PIN) and Help. */
+function MoreMenu({ edit, onHelp }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = e => (e.key === 'Escape' || (e.type === 'pointerdown' && !ref.current.contains(e.target))) && setOpen(false);
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', close);
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', close); };
+  }, [open]);
+  return (
+    <div className="more" ref={ref}>
+      <button className="more-btn" type="button" aria-label="More options" aria-expanded={open} onClick={() => setOpen(o => !o)}><Icon name="dots" /></button>
+      {open && (
+        <div className="more-menu" role="menu">
+          <Link role="menuitem" to={edit}><Icon name="edit" />Edit profile</Link>
+          <button role="menuitem" type="button" onClick={() => { setOpen(false); onHelp(); }}><Icon name="info" />Help</button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function Profile() {
@@ -59,6 +83,7 @@ export default function Profile() {
               <h1>{fullName(p)}</h1>
               {p.memorial ? <span className="badge badge-memorial"><Icon name="ribbon" />{memorialLine(p)}</span>
                 : p.joined ? <span className="verified-mark" title="Verified" role="img" aria-label="Verified"><Icon name="verified" /></span> : <span className="badge">Not joined yet</span>}
+              {p.joined && <MoreMenu edit={edit} onHelp={() => setHelp(true)} />}
             </div>
             <div className="profile-meta">
               <span className="profile-sid"><Icon name="idcard" />Student ID: <b className="num">{studentId(p.id)}</b></span>
@@ -82,12 +107,6 @@ export default function Profile() {
               {phone && <Row icon="phone" label="Contact"><a href={`tel:${phone.replace(/[^\d+]/g, '')}`}>{phone}</a></Row>}
               {place && <Row icon="pin" label="Present address"><b>{place}</b></Row>}
             </ul>
-            {p.joined && (
-              <div className="profile-edit">
-                <Link className="btn btn-secondary btn-sm" to={edit}>Edit profile</Link>
-                {helpBtn}
-              </div>
-            )}
           </section>
         ) : (
           <section className="card card-pad claim-card">

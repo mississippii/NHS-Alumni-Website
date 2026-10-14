@@ -6,9 +6,9 @@ import { Field } from '../../components/form/Field.jsx';
 import { Empty } from '../../components/page.jsx';
 import { currentId, storyName, studentId } from '../../lib/format.js';
 import { shrink } from '../../lib/photo.js';
-import { STORY_KINDS, THIS_YEAR } from '../../lib/school.js';
+import { THIS_YEAR } from '../../lib/school.js';
 
-const BLANK = { id: null, studentId: '', name: '', batch: '', kind: STORY_KINDS[0], title: '', role: '', quote: '', body: '', removePhoto: false };
+const BLANK = { id: null, studentId: '', name: '', batch: '', title: '', role: '', quote: '', body: '', removePhoto: false };
 
 /** Stories: the editor on top, then the published stories. */
 export default function AdminStories({ token, list, reload }) {
@@ -33,7 +33,7 @@ export default function AdminStories({ token, list, reload }) {
   const set = k => e => setF(s => ({ ...s, [k]: e.target.value }));
   const edit = ({ story: s }) => {
     setF({ ...BLANK, id: s.id, studentId: s.alumnusId ? studentId(s.alumnusId) : '', name: s.name || '',
-      batch: !s.alumnusId && s.batch ? String(s.batch) : '', kind: s.kind, title: s.title, role: s.role || '', quote: s.quote || '', body: s.body });
+      batch: !s.alumnusId && s.batch ? String(s.batch) : '', title: s.title, role: s.role || '', quote: s.quote || '', body: s.body });
     setCurrent(s.photo); setPhoto(null); setSaved(null); setError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -69,9 +69,6 @@ export default function AdminStories({ token, list, reload }) {
       <form className="card card-pad form-card form-one" onSubmit={submit}>
         <h2 className="card-title">{f.id ? 'Edit story' : 'New story'}</h2>
         <div className="form-grid">
-          <Field label="Type">
-            <select className="select" value={f.kind} onChange={set('kind')}>{STORY_KINDS.map(k => <option key={k}>{k}</option>)}</select>
-          </Field>
           <Field label="Student ID">
             <input className="input" inputMode="numeric" maxLength={9} placeholder="e.g. 201303003" value={f.studentId} onChange={set('studentId')} />
           </Field>
@@ -123,7 +120,7 @@ export default function AdminStories({ token, list, reload }) {
           <section key={s.id} className="card card-pad admin-story">
             {s.photo ? <img className="story-thumb" src={s.photo} alt="" /> : <Avatar person={{ name: s.name, group: s.group }} size="lg" />}
             <div>
-              <span className="story-tag">{s.kind} · {s.published}</span>
+              <span className="story-tag">{s.published}</span>
               <b>{s.title}</b>
               <span className="text-2">{storyName(s)}{s.batch ? ` · Batch ${s.batch}` : ''}</span>
               <div className="admin-actions">

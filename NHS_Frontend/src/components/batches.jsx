@@ -1,7 +1,7 @@
 // A batch: its card, and the bar that splits it by group.
 import { Link } from 'react-router-dom';
 import { groupShort } from '../lib/format.js';
-import { GROUPS, isJubilee, THIS_YEAR } from '../lib/school.js';
+import { GROUPS } from '../lib/school.js';
 
 /** Batch summary: total plus the per-group split, used at the top of a batch roster. */
 export function BatchSummary({ batch: b }) {
@@ -20,16 +20,13 @@ export function GroupBar({ groups, total }) {
   );
 }
 
-/** `detail` adds each group's count under the bar; `top` marks the biggest batch. */
-export function BatchCard({ batch: b, detail, top }) {
-  const jub = isJubilee(b.year);
+/** `detail` adds each group's count under the bar. */
+export function BatchCard({ batch: b, detail }) {
   return (
-    <Link className={`card card-link batch${jub ? ' is-jubilee' : ''}`} to={`/directory?batch=${b.year}`}
+    <Link className="card card-link batch" to={`/directory?batch=${b.year}`}
       aria-label={`Batch ${b.year}, ${b.count} alumni`}>
       <div className="batch-top">
         <span className="batch-year num">{b.year}</span>
-        {jub ? <span className="badge badge-accent">{THIS_YEAR - b.year} yrs</span>
-          : top && <span className="badge badge-brand">Largest</span>}
       </div>
       <GroupBar groups={b.groups} total={b.count} />
       <span className="batch-count"><b className="num">{b.count}</b> alumni</span>

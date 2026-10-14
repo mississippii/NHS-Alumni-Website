@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigationType, useSearchParams } from 'react-router-dom';
 import { listAlumni, listBatches } from '../../api/public.js';
 import { BatchSummary } from '../../components/batches.jsx';
 import { Icon } from '../../components/Icon.jsx';
@@ -22,6 +22,9 @@ function readFilters(sp) {
   };
 }
 
+// Back from a profile: the same cards ("Load more" pages included) and scroll spot as before. Kept until reload.
+const saved = { key: null, res: null, y: 0 };
+
 export default function Directory() {
   const [sp, setSp] = useSearchParams();
   const f = readFilters(sp);
@@ -31,10 +34,23 @@ export default function Directory() {
   const [open, setOpen] = useState(false);
   const [retry, setRetry] = useState(0);
   // Results accumulate as "Load more" fetches the next page; any filter change starts over.
-  const [res, setRes] = useState({ items: [], page: 0, pages: 1, total: 0, facets: null, loading: true, error: null });
+  const back = useRef(useNavigationType() === 'POP' && saved.key === key && !saved.res?.loading && !saved.res?.error);
+  const [res, setRes] = useState(back.current ? saved.res : { items: [], page: 0, pages: 1, total: 0, facets: null, loading: true, error: null });
+  useEffect(() => { saved.key = key; saved.res = res; }, [key, res]);
+  useEffect(() => {
+    const onScroll = () => { saved.y = window.scrollY; };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   useTitle(f.batch ? `Batch ${f.batch}` : 'Alumni directory');
 
   useEffect(() => {
+    if (back.current) { // restored: no fetch; scroll after Layout's scroll-to-top
+      back.current = false;
+      const y = saved.y;
+      setTimeout(() => window.scrollTo(0, y));
+      return;
+    }
     let live = true;
     setRes(r => ({ ...r, loading: true, error: null, items: [], page: 0 }));
     listAlumni({ ...f, page: 1 }).then(d => live && setRes({ ...d, loading: false, error: null }),

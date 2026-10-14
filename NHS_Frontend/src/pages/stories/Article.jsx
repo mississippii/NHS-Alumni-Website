@@ -40,7 +40,6 @@ export default function Article({ story: s, full, title }) {
   const [lead, ...more] = full ? all : all.slice(0, previewCount(all));
   return (
     <>
-      <span className="story-chip">{s.kind}</span>
       {title}
       <div className="story-meta">
         <Byline story={s} />

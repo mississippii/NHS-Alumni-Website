@@ -14,6 +14,8 @@ const PATHS = {
   calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
   book: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" /><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" /></>,
   verified: <><path d="M12 2.5 14.4 4l2.8-.2 1.2 2.6 2.5 1.3-.3 2.8L22 13l-1.6 2.3.3 2.8-2.5 1.3-1.2 2.6-2.8-.2L12 23.5 9.6 22l-2.8.2-1.2-2.6L3.1 18.3l.3-2.8L2 13l1.4-2.5-.3-2.8 2.5-1.3L6.8 3.8l2.8.2z" fill="currentColor" stroke="none" /><path d="m8.5 13 2.5 2.5 4.5-5" stroke="#fff" /></>,
+  dots: <><circle cx="12" cy="5" r="1.4" fill="currentColor" /><circle cx="12" cy="12" r="1.4" fill="currentColor" /><circle cx="12" cy="19" r="1.4" fill="currentColor" /></>,
+  edit: <path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" />,
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></>,
   phone: <path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2" />,
   mail: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>,
