@@ -31,7 +31,7 @@ export default function UpdateProfile() {
   const id = currentId(+useParams().id) || null;
   const { data: d, loading, error } = useAsync(() => (id ? getAlumnusRaw(id) : Promise.resolve(null)), [id]);
   // The SSC roll, once it matched. It rides in the page's history state, so switching to the roll's own profile keeps it.
-  const { roll, moved } = useLocation().state || {};
+  const { roll, moved, batch } = useLocation().state || {}; // batch: picked in the home page's Join box
   const [unlocked, setUnlocked] = useState(null); // { id, pin, ...private fields } after the email PIN
   useTitle(id ? 'Update my profile' : 'Join the network');
   if (id && loading) return <div className="wrap profile-skel" aria-busy="true"><div className="skeleton skel-block" /></div>;
@@ -47,5 +47,6 @@ export default function UpdateProfile() {
   if (person?.joined && !u) return <EditGate id={id} person={person} onUnlock={setUnlocked} />;
   const start = initial(d, u);
   start.form.roll = roll ? +roll : null;
+  if (!id && batch) start.form.batch = String(batch);
   return <ProfileForm key={id} id={id} person={person} start={start} moved={moved} pin={u?.pin} />;
 }

@@ -9,7 +9,7 @@ import Comments from '../events/Comments.jsx';
 import EventList from '../events/EventList.jsx';
 import HeroSearch from './HeroSearch.jsx';
 import Marquee from './Marquee.jsx';
-import RollFinder from './RollFinder.jsx';
+import JoinFinder from './JoinFinder.jsx';
 
 export default function Home() {
   useTitle(null);
@@ -37,7 +37,7 @@ export default function Home() {
         </div>
       </section>
 
-      <RollFinder firstRecord={s?.firstRecordBatch} />
+      <JoinFinder firstRecord={s?.firstRecordBatch} />
 
       <section className="section">
         <div className="wrap">
