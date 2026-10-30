@@ -23,7 +23,7 @@ export default function Home() {
   return (
     <>
       <section className="hero">
-        <div className="hero-bg" aria-hidden="true"><img className="hero-photo" src="/school.jpg" alt="" /></div>
+        <div className="hero-bg" aria-hidden="true"><img className="hero-photo" src="/school.jpg?v=2" alt="" /></div>
         <div className="wrap">
           <p className="hero-eyebrow">{SCHOOL.name} · EIIN: {SCHOOL.eiin}</p>
           <h1><span>One School.</span><span>Many <em className="kw">Journeys.</em></span><span>One <em className="kw">Community.</em></span></h1>

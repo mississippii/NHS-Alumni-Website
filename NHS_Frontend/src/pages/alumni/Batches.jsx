@@ -5,7 +5,8 @@ import { BatchCard } from '../../components/batches.jsx';
 import { Icon } from '../../components/Icon.jsx';
 import { Empty, PageHeader } from '../../components/page.jsx';
 import { useAsync, useTitle } from '../../lib/hooks.js';
-import { BLOOD_GROUPS } from '../../lib/school.js';
+import { groupShort } from '../../lib/format.js';
+import { BLOOD_GROUPS, GROUPS } from '../../lib/school.js';
 
 export default function Batches() {
   useTitle('Alumni');
@@ -24,7 +25,7 @@ export default function Batches() {
           <label className="input-icon" htmlFor="by">
             <Icon name="search" />
             <input id="by" className="input" type="search" inputMode="numeric" enterKeyHint="search" value={q}
-              onChange={e => setQ(e.target.value)} placeholder="Batch" autoComplete="off" />
+              onChange={e => setQ(e.target.value)} placeholder="Search batch, e.g. 2014" autoComplete="off" />
           </label>
           <button className="btn btn-secondary filter-btn" type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label="Filter by blood group">
             <Icon name="filter" />
@@ -58,6 +59,11 @@ export default function Batches() {
           {error && <div className="card"><Empty icon="info" title="Couldn’t load batches">Refresh the page to try again.</Empty></div>}
           {!data && !error && <div className="batch-grid">{Array.from({ length: 8 }, (_, i) => <div key={i} className="skeleton batch-skel" />)}</div>}
           {data && !shown.length && <div className="card"><Empty icon="search" title={`No batch matches “${q.trim()}”`}>Try a year between {Math.min(...years)} and {Math.max(...years)}.</Empty></div>}
+          {data && shown.length > 0 && (
+            <div className="legend batches-legend" aria-label="Colours">
+              {GROUPS.map(g => <span key={g.name}><i className={g.cls} />{groupShort(g.name)}</span>)}
+            </div>
+          )}
           <div className="batch-grid">{shown.map(b => <BatchCard key={b.year} batch={b} detail />)}</div>
         </div>
       </section>

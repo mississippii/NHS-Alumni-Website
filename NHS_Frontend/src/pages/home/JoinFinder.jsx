@@ -29,6 +29,16 @@ export default function JoinFinder({ firstRecord }) {
     setF(s => (k === 'batch' ? { batch: v, group: '', roll: '' } : { ...s, [k]: v }));
   };
 
+  const pickYear = y => { setError(null); setF({ batch: String(y), group: '', roll: '' }); };
+  // the search box narrows the row (type "201" → 2019…2010); a full year picks it
+  const [q, setQ] = useState('');
+  const shown = YEARS.filter(y => String(y).startsWith(q));
+  const typeYear = e => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+    setQ(v);
+    if (YEARS.includes(+v)) pickYear(+v);
+  };
+
   // a department button: straight to the batch page for names, else on to the SSC roll
   const pickGroup = g => (kind === 'list' ? navigate(`/directory?batch=${year}&group=${encodeURIComponent(g)}`) : setF(s => ({ ...s, group: g })));
 
@@ -60,13 +70,19 @@ export default function JoinFinder({ firstRecord }) {
       <dialog ref={ref} className="pin-dialog roll-dialog" aria-labelledby="join-title">
         <form onSubmit={submit}>
           <h2 id="join-title">Join the network</h2>
-          <label className="field">
-            <span className="field-label">Batch (SSC year)</span>
-            <input className="input num" list="join-years" required inputMode="numeric" maxLength={4} autoComplete="off"
-              placeholder="Type or choose, e.g. 2014" value={f.batch} onChange={set('batch')} />
-            <datalist id="join-years">{YEARS.map(y => <option key={y} value={y} />)}</datalist>
-          </label>
-          {f.batch.length === 4 && !year && <p className="err">Choose a year from {FOUNDED} to {THIS_YEAR}.</p>}
+          {/* batches as one swipeable row of year buttons; typing in the box narrows the row */}
+          <fieldset className="field join-groups">
+            <legend className="field-label">Batch (SSC year)</legend>
+            <input className="input num" type="search" inputMode="numeric" maxLength={4} autoComplete="off" aria-label="Type your batch"
+              placeholder="Type your batch, e.g. 2014" value={q} onChange={typeYear} />
+            {shown.length ? (
+            <div className="year-strip" role="radiogroup" aria-label="Batch">
+              {shown.map(y => (
+                <button key={y} type="button" role="radio" className="year-chip num" aria-checked={year === y} onClick={() => pickYear(y)}>{y}</button>
+              ))}
+            </div>
+            ) : <p className="err">No batch {q}: choose a year from {FOUNDED} to {THIS_YEAR}.</p>}
+          </fieldset>
 
           {(kind === 'roll' || kind === 'list') && (
             <fieldset className="field join-groups">

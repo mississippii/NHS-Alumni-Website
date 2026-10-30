@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import { groupShort } from '../lib/format.js';
 import { GROUPS } from '../lib/school.js';
+import { Icon } from './Icon.jsx';
 
 /** Batch summary: total plus the per-group split, used at the top of a batch roster. */
 export function BatchSummary({ batch: b }) {
@@ -20,7 +21,7 @@ export function GroupBar({ groups, total }) {
   );
 }
 
-/** `detail` adds each group's count under the bar. */
+/** `detail` adds the active members and each group's count under the bar. */
 export function BatchCard({ batch: b, detail }) {
   return (
     <Link className="card card-link batch" to={`/directory?batch=${b.year}`}
@@ -30,6 +31,7 @@ export function BatchCard({ batch: b, detail }) {
       </div>
       <GroupBar groups={b.groups} total={b.count} />
       <span className="batch-count"><b className="num">{b.count}</b> alumni</span>
+      {detail && b.active > 0 && <span className="batch-active"><Icon name="verified" /><b className="num">{b.active}</b> active</span>}
       {detail && (
         <span className="batch-split">
           {GROUPS.map(g => <span key={g.name} title={g.name}><i className={g.cls} /><span className="num">{b.groups?.[g.name] || 0}</span></span>)}

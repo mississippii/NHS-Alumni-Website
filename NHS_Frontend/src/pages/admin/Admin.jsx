@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useOutletContext } from 'react-router-dom';
+import { Link, useLocation, useOutletContext } from 'react-router-dom';
 import { adminLogin, adminLogout, listAllStories, listIssues, listPending } from '../../api/admin.js';
-import { PageHeader } from '../../components/page.jsx';
+import { Icon } from '../../components/Icon.jsx';
 import { useTitle } from '../../lib/hooks.js';
 import AdminEvents from './AdminEvents.jsx';
 import AdminNotifications from './AdminNotifications.jsx';
@@ -24,6 +24,8 @@ export default function Admin() {
   const [storyList, setStoryList] = useState(null);
   const [issues, setIssues] = useState([]);    // help notes sent from profiles
   const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const setAdminBar = useOutletContext(); // the site header shows Log out and the waiting count
 
   const expired = e => { setJoins(null); setError(e.status === 401 ? 'Your login has expired. Please log in again.' : e.message); if (e.status === 401) { setToken(''); save(''); } };
@@ -40,8 +42,8 @@ export default function Admin() {
 
   const login = e => {
     e.preventDefault();
-    setError(null);
-    adminLogin(email.trim(), password).then(t => { setPassword(''); open(t); }, err => setError(err.message));
+    setError(null); setBusy(true);
+    adminLogin(email.trim(), password).then(t => { setPassword(''); return open(t); }, err => setError(err.message)).finally(() => setBusy(false));
   };
   const logout = () => { adminLogout(token).catch(() => {}); setToken(''); save(''); setJoins(null); };
 
@@ -52,23 +54,29 @@ export default function Admin() {
   }, [token, !joins, waiting]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!token || !joins) return (
-    <>
-      <PageHeader title="Admin login" />
-      <form className="wrap form" onSubmit={login}>
-        <section className="card card-pad form-card form-one">
-          <label className="field">
-            <span className="field-label">Email</span>
-            <input className="input" type="email" required autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} />
-          </label>
-          <label className="field">
-            <span className="field-label">Password</span>
-            <input className="input" type="password" required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} />
-          </label>
-          {error && <p className="err" role="alert">{error}</p>}
-          <button className="btn btn-primary" type="submit">Log in</button>
-        </section>
+    <div className="login-page">
+      <form className="card login-card" onSubmit={login}>
+        <span className="pin-icon"><Icon name="lock" /></span>
+        <div>
+          <h1>Admin login</h1>
+          <p className="text-2">For the alumni association’s admins only.</p>
+        </div>
+        <label className="field">
+          <span className="field-label">Email</span>
+          <input className="input" type="email" required autoComplete="username" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} />
+        </label>
+        <label className="field">
+          <span className="field-label">Password</span>
+          <span className="pw">
+            <input className="input" type={showPw ? 'text' : 'password'} required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} />
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowPw(v => !v)} aria-pressed={showPw}>{showPw ? 'Hide' : 'Show'}</button>
+          </span>
+        </label>
+        {error && <p className="err" role="alert">{error}</p>}
+        <button className="btn btn-primary btn-block" type="submit" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</button>
+        <Link className="link login-back" to="/"><Icon name="arrow" />Back to the site</Link>
       </form>
-    </>
+    </div>
   );
 
   const pendingStories = (storyList || []).filter(i => i.status === 'PENDING');

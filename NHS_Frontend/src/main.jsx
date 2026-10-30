@@ -17,6 +17,14 @@ const Profile = lazy(() => import('./pages/profile/Profile.jsx'));
 const UpdateProfile = lazy(() => import('./pages/profile-form/UpdateProfile.jsx'));
 const Admin = lazy(() => import('./pages/admin/Admin.jsx'));
 const ComingSoon = lazy(() => import('./pages/ComingSoon.jsx'));
+// Phone keyboards cover the bottom of the screen without shrinking the page: --kb is the covered height,
+// so bottom sheets and dialogs (index.css) can sit above the keyboard instead of behind it.
+const vv = window.visualViewport;
+if (vv) {
+  const kb = () => document.documentElement.style.setProperty('--kb', `${Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop))}px`);
+  vv.addEventListener('resize', kb);
+  vv.addEventListener('scroll', kb);
+}
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>

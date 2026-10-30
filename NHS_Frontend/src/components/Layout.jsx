@@ -3,6 +3,9 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { visits } from '../api/public.js';
 import { SCHOOL, THIS_YEAR } from '../lib/school.js';
 import { Icon } from './Icon.jsx';
+import { SOCIAL } from './SocialLinks.jsx';
+
+const FbLogo = () => <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{SOCIAL.facebook.svg}</svg>;
 
 // Shared by the desktop nav and the phone tab bar.
 const NAV = [
@@ -50,6 +53,7 @@ export default function Layout() {
   const current = to => (isCurrent(to) ? 'page' : undefined);
   const isAdmin = pathname.startsWith('/admin');
   const nav = isAdmin ? ADMIN_NAV : NAV;
+  const loggedOut = isAdmin && !adminBar; // the admin login page shows no menus
 
   return (
     <>
@@ -60,10 +64,14 @@ export default function Layout() {
             <Crest />
             <span className="brand-name"><b>{SCHOOL.name}</b><small>{isAdmin ? 'Admin' : 'Alumni Network'}</small></span>
           </Link>
-          <nav className="nav" aria-label="Main">
+          {!loggedOut && <nav className="nav" aria-label="Main">
             {nav.map(n => <Link key={n.to} to={n.to} aria-current={current(n.to)}>{n.label}<Count n={n} bar={adminBar} /></Link>)}
             {isAdmin ? <Link to="/">View site</Link> : <Link to="/about" aria-current={current('/about')}>About</Link>}
-          </nav>
+          </nav>}
+          {!isAdmin && (
+            <a className="header-fb" href={SCHOOL.fbGroup} target="_blank" rel="noopener noreferrer"
+              aria-label="Our official Facebook group" title="Facebook group"><FbLogo /></a>
+          )}
           {isAdmin && adminBar && <button className="btn btn-secondary btn-sm header-logout" type="button" onClick={adminBar.logout}>Log out</button>}
         </div>
       </header>
@@ -87,6 +95,7 @@ export default function Layout() {
             <Link to="/stories">Stories</Link>
             <Link to="/events">Events</Link>
             <Link to="/about">About</Link>
+            <a className="footer-fb" href={SCHOOL.fbGroup} target="_blank" rel="noopener noreferrer" aria-label="Our official Facebook group" title="Facebook group"><FbLogo /></a>
             {visitCount > 0 && <span className="footer-count num">{visitCount.toLocaleString()}</span>}
           </nav>
           <p className="footer-bottom">© {THIS_YEAR} {SCHOOL.name} Alumni Association</p>
@@ -94,11 +103,11 @@ export default function Layout() {
       </footer>
       )}
 
-      <nav className="tabbar" aria-label="Main">
+      {!loggedOut && <nav className="tabbar" aria-label="Main">
         {nav.map(n => (
           <Link key={n.to} to={n.to} aria-current={current(n.to)}><span className="tab-ic"><Icon name={n.icon} /><Count n={n} bar={adminBar} /></span>{n.label}</Link>
         ))}
-      </nav>
+      </nav>}
     </>
   );
 }

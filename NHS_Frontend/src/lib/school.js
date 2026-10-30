@@ -1,5 +1,5 @@
 // Facts about the school and the fixed lists the forms use.
-export const SCHOOL = { short: 'NHS', name: 'Nimsar High School', est: 1958, city: 'Comilla', eiin: '105270', email: 'nhs.alumnus@gmail.com' };
+export const SCHOOL = { short: 'NHS', name: 'Nimsar High School', est: 1958, city: 'Comilla', eiin: '105270', email: 'nhs.alumnus@gmail.com', fbGroup: 'https://www.facebook.com/groups/nhsalumni.org' };
 export const FOUNDED = SCHOOL.est;
 // A batch is the year its students passed the SSC exam (passed SSC in 2014 = Batch 2014).
 export const THIS_YEAR = new Date().getFullYear();
