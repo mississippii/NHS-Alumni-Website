@@ -6,12 +6,12 @@ import { BloodPicker } from '../../components/form/BloodPicker.jsx';
 import { CodePicker } from '../../components/form/CodePicker.jsx';
 import { EduRows } from '../../components/form/EduRows.jsx';
 import { Field } from '../../components/form/Field.jsx';
+import { PhotoCrop } from '../../components/form/PhotoCrop.jsx';
 import { socialMap, SocialInputs } from '../../components/form/SocialInputs.jsx';
 import { Icon } from '../../components/Icon.jsx';
 import { Empty } from '../../components/page.jsx';
 import { fullName, studentId } from '../../lib/format.js';
 import { useAsync } from '../../lib/hooks.js';
-import { shrink } from '../../lib/photo.js';
 import { FOUNDED, GROUPS, SCHOOL, SEXES } from '../../lib/school.js';
 import PinDialog from './PinDialog.jsx';
 
@@ -37,6 +37,7 @@ export default function ProfileForm({ id, person, start, moved, pin }) {
   const [pinOpen, setPinOpen] = useState(false);
   const [done, setDone] = useState(null);
   const [photo, setPhoto] = useState(null); // { blob, url }
+  const [cropFile, setCropFile] = useState(null); // picked photo, open in the Adjust box
   // Join is only for batches older than the school's records; anyone in the records updates their existing profile.
   // The cut-off comes from the school's sheets only, so alumni who already joined (e.g. batch 1992) don't move it.
   const stats = useAsync(getStats, []);
@@ -55,12 +56,7 @@ export default function ProfileForm({ id, person, start, moved, pin }) {
     e.target.value = '';
     if (!file) return;
     setError(null);
-    try {
-      const blob = await shrink(file);
-      setPhoto({ blob, url: URL.createObjectURL(blob) });
-    } catch {
-      setError('That file isn’t a photo we can use. Try a JPEG or PNG.');
-    }
+    setCropFile(file); // the Adjust box sets the photo
   };
 
   const set = k => e => setF(s => ({ ...s, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
@@ -233,6 +229,11 @@ export default function ProfileForm({ id, person, start, moved, pin }) {
         </div>
       </form>
 
+      {cropFile && (
+        <PhotoCrop file={cropFile} onCancel={() => setCropFile(null)}
+          onDone={blob => { setPhoto({ blob, url: URL.createObjectURL(blob) }); setCropFile(null); }}
+          onError={() => { setCropFile(null); setError('That file isn’t a photo we can use. Try a JPEG or PNG.'); }} />
+      )}
       {pinOpen && (
         <PinDialog email={f.email} onClose={() => setPinOpen(false)}
           onResend={() => requestPin(id, payload(pin))}

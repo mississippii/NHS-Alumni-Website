@@ -1,5 +1,4 @@
-import { getStats, listAlumni, listBatches, listComments, listEvents } from '../../api/public.js';
-import { BatchCard } from '../../components/batches.jsx';
+import { getStats, listAlumni, listComments, listEvents } from '../../api/public.js';
 import { Carousel } from '../../components/Carousel.jsx';
 import { SectionHead } from '../../components/page.jsx';
 import { ProfileCard } from '../../components/people.jsx';
@@ -8,12 +7,10 @@ import { SCHOOL } from '../../lib/school.js';
 import Comments from '../events/Comments.jsx';
 import EventList from '../events/EventList.jsx';
 import HeroSearch from './HeroSearch.jsx';
-import Marquee from './Marquee.jsx';
 import JoinFinder from './JoinFinder.jsx';
 
 export default function Home() {
   useTitle(null);
-  const batches = useAsync(listBatches, []);
   const stats = useAsync(getStats, []);
   const joined = useAsync(() => listAlumni({ joined: true, sort: 'joined', size: 10 }), []);
   const events = useAsync(listEvents, []);
@@ -38,15 +35,6 @@ export default function Home() {
       </section>
 
       <JoinFinder firstRecord={s?.firstRecordBatch} />
-
-      <section className="section">
-        <div className="wrap">
-          <SectionHead title="Find your batch" desc="Your batch is the year you first sat the SSC exam." to="/alumni" linkLabel="All batches" />
-          {batches.data ? <Marquee items={[...batches.data].reverse()} secs={3.5} render={b => <BatchCard key={b.year} batch={b} />} /> : (
-            <div className="batch-grid">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton batch-skel" />)}</div>
-          )}
-        </div>
-      </section>
 
       {joined.data?.items.length > 0 && (
         <section className="section">

@@ -6,11 +6,11 @@ import { Avatar } from '../../components/Avatar.jsx';
 import { Carousel } from '../../components/Carousel.jsx';
 import { blankEdu, EduRows, eduType } from '../../components/form/EduRows.jsx';
 import { Field } from '../../components/form/Field.jsx';
+import { PhotoCrop } from '../../components/form/PhotoCrop.jsx';
 import { socialMap, socialRows, SocialInputs } from '../../components/form/SocialInputs.jsx';
 import { SectionHead } from '../../components/page.jsx';
 import { ProfileCard } from '../../components/people.jsx';
 import { currentId, studentId } from '../../lib/format.js';
-import { shrink } from '../../lib/photo.js';
 import { BLOOD_GROUPS, GROUPS, SEXES, THIS_YEAR } from '../../lib/school.js';
 
 const NO_MEMORIAL = { deceased: true, passedOn: '', name: '', village: '', email: '', phone: '', title: '', org: '', bio: '', batch: '', group: '',
@@ -25,6 +25,7 @@ export default function AdminStudents({ token }) {
   const [rec, setRec] = useState(null);      // the record being edited; { id: null } = a new person
   const [f, setF] = useState(NO_MEMORIAL);
   const [photo, setPhoto] = useState(null);  // { blob, url } picked now
+  const [cropFile, setCropFile] = useState(null); // picked photo, open in the Adjust box
   const [edu, setEdu] = useState([blankEdu('College')]);
   const [socials, setSocials] = useState(socialRows);
   const [busy, setBusy] = useState(false);
@@ -54,10 +55,8 @@ export default function AdminStudents({ token }) {
     const file = e.target.files[0];
     e.target.value = '';
     if (!file) return;
-    try {
-      const blob = await shrink(file);
-      setPhoto({ blob, url: URL.createObjectURL(blob) });
-    } catch { setError('That file isn’t a photo we can use. Try a JPEG or PNG.'); }
+    setError(null);
+    setCropFile(file); // the Adjust box sets the photo
   };
   const submit = async e => {
     e.preventDefault();
@@ -113,6 +112,11 @@ export default function AdminStudents({ token }) {
               {shown ? 'Change photo' : 'Add photo'}
             </label>
           </div>
+          {cropFile && (
+            <PhotoCrop file={cropFile} onCancel={() => setCropFile(null)}
+              onDone={blob => { setPhoto({ blob, url: URL.createObjectURL(blob) }); setCropFile(null); }}
+              onError={() => { setCropFile(null); setError('That file isn’t a photo we can use. Try a JPEG or PNG.'); }} />
+          )}
           <div className="form-grid">
             {rec.id && (
               <label className="switch-row wide">

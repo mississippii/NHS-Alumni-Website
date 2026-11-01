@@ -641,21 +641,6 @@ button { font: inherit; color: inherit; }
 .claim-card .card-title { margin-bottom: var(--s-1); }
 @media (min-width: 640px) { .claim-card { grid-template-columns: 1fr auto; align-items: center; } }
 
-/* ---------- home: batch carousel ---------- */
-.marquee { --gap: var(--s-3); overflow: hidden; margin-inline: calc(-1 * var(--gutter)); padding: var(--s-1) 0 var(--s-2);
-  mask-image: linear-gradient(to right, transparent, #000 var(--gutter), #000 calc(100% - var(--gutter)), transparent); }
-.marquee-track { display: flex; gap: var(--gap); width: max-content; animation: marquee var(--dur, 60s) linear infinite; }
-.marquee-copy { display: contents; }
-.marquee-track > a, .marquee-copy > a { flex: none; width: 168px; }
-.marquee:hover .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
-/* the track holds two copies: moving by half (plus half a gap) lands exactly on the start of the copy */
-@keyframes marquee { to { transform: translateX(calc(-50% - var(--gap) / 2)); } }
-@media (min-width: 960px) { .marquee { --gap: var(--s-4); } .marquee-track > a, .marquee-copy > a { width: 200px; } }
-@media (prefers-reduced-motion: reduce) {
-  .marquee { overflow-x: auto; mask-image: none; }
-  .marquee-track { animation: none; }
-  .marquee-copy { display: none; }
-}
 /* ================= design polish ================= */
 /* Green surfaces share one texture: a warm glow, a soft shade and a fine dot grid. */
 .hero, .profile-cover, .footer {
@@ -1229,3 +1214,17 @@ button { font: inherit; color: inherit; }
 .login-back { justify-self: center; }
 .login-back .ic { transform: scaleX(-1); }
 @media (min-width: 640px) { .login-card { padding: var(--s-8); } }
+
+/* ---------- "Adjust your photo": square frame, round guide for the avatar ---------- */
+.crop-sheet { display: grid; gap: var(--s-3); justify-items: center; padding: var(--s-5) var(--s-4) calc(var(--s-4) + var(--safe-b)); text-align: center; }
+.crop-sheet h2 { font: 600 var(--t-xl)/1.3 var(--f-sans); }
+.crop-sheet .text-2 { font-size: var(--t-sm); margin-top: -6px; }
+.crop-frame { position: relative; width: min(300px, 100%); aspect-ratio: 1; overflow: hidden; border-radius: var(--r-md);
+  background: var(--surface-2); touch-action: none; cursor: grab; user-select: none; }
+.crop-frame:active { cursor: grabbing; }
+.crop-frame img { position: absolute; top: 50%; left: 50%; max-width: none; pointer-events: none; }
+/* shade the corners a round avatar hides */
+.crop-frame::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgb(255 255 255 / .9);
+  box-shadow: 0 0 0 999px rgb(0 0 0 / .4); pointer-events: none; }
+.crop-zoom { width: min(300px, 100%); accent-color: var(--brand); }
+.crop-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); width: min(300px, 100%); }
