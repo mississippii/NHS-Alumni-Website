@@ -1,4 +1,4 @@
-// A batch: its card, and the bar that splits it by group.
+// A batch: the per-group summary on its roster page, and its row in the Alumni ledger.
 import { Link } from 'react-router-dom';
 import { groupShort } from '../lib/format.js';
 import { GROUPS } from '../lib/school.js';
@@ -12,31 +12,18 @@ export function BatchSummary({ batch: b }) {
     </div>
   );
 }
-export function GroupBar({ groups, total }) {
+/** One row of the Alumni ledger: the year, the number of alumni and how many have joined. */
+export function BatchRow({ batch: b }) {
+  const split = GROUPS.map(g => `${b.groups?.[g.name] || 0} ${g.name}`).join(', ');
   return (
-    <div className="gbar" role="img"
-      aria-label={GROUPS.map(g => `${groups?.[g.name] || 0} ${g.name}`).join(', ')}>
-      {GROUPS.map(g => groups?.[g.name] ? <i key={g.name} className={g.cls} style={{ width: `${(groups[g.name] / total) * 100}%` }} /> : null)}
-    </div>
-  );
-}
-
-/** `detail` adds the active members and each group's count under the bar. */
-export function BatchCard({ batch: b, detail }) {
-  return (
-    <Link className="card card-link batch" to={`/directory?batch=${b.year}`}
-      aria-label={`Batch ${b.year}, ${b.count} alumni`}>
-      <div className="batch-top">
-        <span className="batch-year num">{b.year}</span>
-      </div>
-      <GroupBar groups={b.groups} total={b.count} />
-      <span className="batch-count"><b className="num">{b.count}</b> alumni</span>
-      {detail && b.active > 0 && <span className="batch-active"><Icon name="verified" /><b className="num">{b.active}</b> active</span>}
-      {detail && (
-        <span className="batch-split">
-          {GROUPS.map(g => <span key={g.name} title={g.name}><i className={g.cls} /><span className="num">{b.groups?.[g.name] || 0}</span></span>)}
-        </span>
-      )}
-    </Link>
+    <li>
+      <Link className="ledger-row" to={`/directory?batch=${b.year}`}
+        aria-label={`Batch ${b.year}: ${b.count} alumni (${split}), ${b.active || 0} joined`}>
+        <span className="ledger-year num">{b.year}</span>
+        <span className="ledger-count num">{b.count}</span>
+        <span className="ledger-joined num">{b.active > 0 ? <><Icon name="verified" />{b.active}</> : '–'}</span>
+        <Icon name="chevron" className="ic ledger-chev" />
+      </Link>
+    </li>
   );
 }

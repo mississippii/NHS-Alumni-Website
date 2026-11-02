@@ -12,3 +12,6 @@ node_modules/
 
 # Server-only secrets (admin password hash)
 NHS-Backend/secrets.yaml
+
+# Playwright MCP screenshots
+.playwright-mcp/

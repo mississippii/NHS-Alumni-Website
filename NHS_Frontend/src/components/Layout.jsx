@@ -87,20 +87,28 @@ export default function Layout() {
             <p className="footer-tag">Once a student, always family.</p>
             <div className="footer-brand">
               <Crest />
-              <div><b>{SCHOOL.name}</b><p>{SCHOOL.city} · Est. {SCHOOL.est} · EIIN: {SCHOOL.eiin}</p>
-                <p>Contact: <a className="footer-mail" href={`mailto:${SCHOOL.email}`}>{SCHOOL.email}</a></p></div>
+              <div><b>{SCHOOL.name}</b><p>{SCHOOL.city} · Est. {SCHOOL.est} · EIIN: {SCHOOL.eiin}</p></div>
             </div>
           </div>
-          <nav aria-label="Footer">
-            <Link to="/alumni">Alumni</Link>
-            <Link to="/stories">Stories</Link>
-            <Link to="/events">Events</Link>
-            <Link to="/about">About</Link>
-            <Link to="/help">Help</Link>
-            <a className="footer-fb" href={SCHOOL.fbGroup} target="_blank" rel="noopener noreferrer" aria-label="Our official Facebook group" title="Facebook group"><FbLogo /></a>
-            {visitCount > 0 && <span className="footer-count num">{visitCount.toLocaleString()}</span>}
+          <nav className="footer-col" aria-labelledby="footer-explore">
+            <h2 className="footer-h" id="footer-explore">Explore</h2>
+            <div className="footer-links">
+              <Link to="/alumni">Alumni</Link>
+              <Link to="/stories">Stories</Link>
+              <Link to="/events">Events</Link>
+              <Link to="/about">About</Link>
+              <Link to="/help">Help</Link>
+            </div>
           </nav>
-          <p className="footer-bottom">© {THIS_YEAR} {SCHOOL.name} Alumni Association</p>
+          <div className="footer-col">
+            <h2 className="footer-h">Get in touch</h2>
+            <a className="footer-contact" href={`mailto:${SCHOOL.email}`}><Icon name="mail" />{SCHOOL.email}</a>
+            <a className="footer-contact" href={SCHOOL.fbGroup} target="_blank" rel="noopener noreferrer"><FbLogo />Facebook group</a>
+          </div>
+          <div className="footer-bottom">
+            <span>© {THIS_YEAR} {SCHOOL.name} Alumni Association</span>
+            {visitCount > 0 && <span className="num">{visitCount.toLocaleString()} visits</span>}
+          </div>
         </div>
       </footer>
       )}
