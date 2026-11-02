@@ -1270,27 +1270,41 @@ button { font: inherit; color: inherit; }
 .ledger-sum { font-size: var(--t-sm); color: var(--text-2); }
 .ledger-sum b { color: var(--text); font-weight: 600; }
 /* the table */
-.ledger { --cols: minmax(0, 1fr) 4.5rem 4.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+.ledger { --cols: minmax(0, 1fr) 5rem minmax(0, 1fr); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
 .ledger-head, .ledger-row { display: grid; grid-template-columns: var(--cols); align-items: center; column-gap: var(--s-3); padding-inline: var(--s-4); }
 .ledger-head { min-height: 40px; background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: var(--t-xs); font-weight: 600; color: var(--text-2); }
-.ledger-head > span:nth-child(n+2) { text-align: right; }
+.ledger-head > span:nth-child(2), .ledger-count { text-align: center; }
+.ledger-head > span:nth-child(3) { text-align: right; padding-right: calc(28px + var(--s-3)); }
+/* Joined and the arrow share the right column, so the left and right sides are equal and Alumni sits in the exact middle */
+.ledger-joined, .ledger-go { grid-row: 1; grid-column: 3; }
+.ledger-joined { padding-right: calc(28px + var(--s-3)); }
+.ledger-go { justify-self: end; }
 .ledger-list { list-style: none; margin: 0; padding: 0; }
 .ledger-list > li + li { border-top: 1px solid var(--border); }
 .ledger-row { min-height: 52px; transition: background .12s; }
 .ledger-row:hover, .ledger-row:active { background: var(--surface-2); }
-.ledger-year { font: 700 1.125rem/1 var(--f-sans); letter-spacing: -.01em; }
-.ledger-count { font-weight: 600; text-align: right; }
+/* the year in the crest's serif, like a yearbook; the century is quieter so the class year leads (20|14) */
+.ledger-year { font: 400 1.375rem/1 "Young Serif", Georgia, serif; font-variant-numeric: lining-nums tabular-nums; letter-spacing: .01em; color: var(--brand-text); }
+.ledger-year > span { color: color-mix(in srgb, var(--brand-text) 60%, var(--surface)); } /* ≥3:1 in both themes (large text) */
+.ledger-count { font-weight: 600; }
 .ledger-joined { display: inline-flex; align-items: center; justify-content: flex-end; gap: 3px; font-size: var(--t-sm); color: var(--text-2); }
 .ledger-joined .ic { width: 14px; height: 14px; color: var(--verified); }
-.ledger-chev { display: none; }
+/* "go" button at the end of each row: a soft green circle with an arrow; fills green and nudges on hover/tap */
+.ledger-go { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--r-full);
+  background: var(--brand-soft); color: var(--brand-text); transition: background .15s, color .15s; }
+.ledger-go .ic { width: 16px; height: 16px; stroke-width: 2.2; transition: transform .15s ease-out; }
+.ledger-row:hover .ledger-go, .ledger-row:active .ledger-go, .ledger-row:focus-visible .ledger-go { background: var(--brand); color: var(--brand-fg); }
+.ledger-row:hover .ledger-go .ic, .ledger-row:active .ledger-go .ic { transform: translateX(2px); }
+/* phones: the table runs edge to edge, like a settings list */
+@media (max-width: 639px) {
+  .ledger { margin-inline: calc(-1 * var(--gutter)); border-inline: 0; border-radius: 0; }
+}
 .ledger-skel { display: flex; align-items: center; min-height: 52px; padding-inline: var(--s-4); border-top: 1px solid var(--border); }
 .ledger-skel:first-child { border-top: 0; }
 @media (min-width: 640px) {
-  .ledger { --cols: minmax(0, 1fr) 6rem 6rem 16px; }
   .ledger-head, .ledger-row, .ledger-skel { padding-inline: var(--s-5); }
   .ledger-row { min-height: 48px; }
-  .ledger-year { font-size: var(--t-lg); }
-  .ledger-chev { display: block; width: 16px; height: 16px; color: var(--text-3); }
+  .ledger-year { font-size: 1.5rem; }
 }
 @media (min-width: 960px) { .batches-page { padding-top: var(--s-6); } }
 

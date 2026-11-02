@@ -19,10 +19,10 @@ export function BatchRow({ batch: b }) {
     <li>
       <Link className="ledger-row" to={`/directory?batch=${b.year}`}
         aria-label={`Batch ${b.year}: ${b.count} alumni (${split}), ${b.active || 0} joined`}>
-        <span className="ledger-year num">{b.year}</span>
+        <span className="ledger-year num"><span>{String(b.year).slice(0, 2)}</span>{String(b.year).slice(2)}</span>
         <span className="ledger-count num">{b.count}</span>
         <span className="ledger-joined num">{b.active > 0 ? <><Icon name="verified" />{b.active}</> : '–'}</span>
-        <Icon name="chevron" className="ic ledger-chev" />
+        <span className="ledger-go"><Icon name="arrow" /></span>
       </Link>
     </li>
   );

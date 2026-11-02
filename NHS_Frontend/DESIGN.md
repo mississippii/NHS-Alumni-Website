@@ -329,7 +329,7 @@ components:
 
 ## NHS overrides
 
-This file is the Airbnb system adapted for Nimsar High School Alumni. Wherever it says **Rausch** / `#ff385c`, use the school green `#1C4A3B` (`--brand` in `src/index.css`); gold `#C8901A` (`--accent`) is a small accent only. Font: **Hanken Grotesk** stands in for Airbnb Cereal; **Young Serif** is kept only for the "NHS" lettering inside the school crest. Tokens live in `:root` of `src/index.css` (the "Airbnb layer" at the end). Keep dark mode working.
+This file is the Airbnb system adapted for Nimsar High School Alumni. Wherever it says **Rausch** / `#ff385c`, use the school green `#1C4A3B` (`--brand` in `src/index.css`); gold `#C8901A` (`--accent`) is a small accent only. Font: **Hanken Grotesk** stands in for Airbnb Cereal; **Young Serif** is kept for the "NHS" lettering in the school crest and the batch years on the Alumni page. Tokens live in `:root` of `src/index.css` (the "Airbnb layer" at the end). Keep dark mode working.
 
 ## Overview
 
