@@ -1326,7 +1326,7 @@ p { text-wrap: pretty; }
 .footer-col, .footer-links { display: flex; flex-wrap: wrap; column-gap: var(--s-5); }
 .footer-links a, .footer-contact { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 44px; font-size: var(--t-sm); font-weight: 500; color: var(--hero-text); }
 .footer-links a:hover, .footer-contact:hover { text-decoration: underline; text-underline-offset: 3px; }
-.footer-contact { overflow-wrap: anywhere; color: var(--hero-text-2); }
+.footer-contact { white-space: nowrap; color: var(--hero-text-2); } /* an item never splits; the pair wraps whole */
 .footer-contact svg { flex: none; width: 18px; height: 18px; color: var(--accent); }
 .footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s-1) var(--s-4);
   margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px solid rgb(255 255 255 / .14); font-size: var(--t-xs); color: var(--hero-text-2); }
@@ -1370,3 +1370,7 @@ p { text-wrap: pretty; }
 @media (max-width: 959px) { .form-submit { margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); box-shadow: 0 -4px 12px rgb(0 0 0 / .04); } }
 /* footer: the real Facebook logo, blue circle with a white "f" (the white shows through the f's cutout) */
 .footer-contact[href^="http"] svg { color: #0866FF; background: #fff; border-radius: 50%; }
+/* small phones (< ~380px): the search field's built-in width pushed the hero wider than the screen; let the column shrink */
+.hero .wrap { grid-template-columns: minmax(0, 1fr); }
+.search-form input { width: 100%; }
+.comments, .comment-main { grid-template-columns: minmax(0, 1fr); } /* small phones: a long "Name ✓ · Batch" line shortens the name with … instead of widening the page */

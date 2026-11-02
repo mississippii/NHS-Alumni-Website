@@ -103,7 +103,7 @@ export default function Layout() {
           <div className="footer-col">
             <h2 className="footer-h">Get in touch</h2>
             <a className="footer-contact" href={`mailto:${SCHOOL.email}`}><Icon name="mail" />{SCHOOL.email}</a>
-            <a className="footer-contact" href={SCHOOL.fbGroup} target="_blank" rel="noopener noreferrer"><FbLogo />Facebook group</a>
+            <a className="footer-contact" href={SCHOOL.fbGroup} target="_blank" rel="noopener noreferrer"><FbLogo />Facebook</a>
           </div>
           <div className="footer-bottom">
             <span>© {THIS_YEAR} {SCHOOL.name} Alumni Association</span>
