@@ -3,19 +3,24 @@ import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from './Icon.jsx';
 
+/** Home > … path. crumbs = [[to, label], …]; the last one has to = null (current page). */
+export function Breadcrumb({ crumbs }) {
+  return (
+    <nav className="breadcrumb" aria-label="Breadcrumb">
+      <Link to="/">Home</Link>
+      {crumbs.map(([to, label]) => (
+        <Fragment key={label}><Icon name="chevron" />{to ? <Link to={to}>{label}</Link> : <span aria-current="page">{label}</span>}</Fragment>
+      ))}
+    </nav>
+  );
+}
+
 export function PageHeader({ crumbs, title, desc, children }) {
   return (
     <header className="page-header">
       <div className="wrap">
-        {crumbs && (
-          <nav className="breadcrumb" aria-label="Breadcrumb">
-            <Link to="/">Home</Link>
-            {crumbs.map(([to, label]) => (
-              <Fragment key={label}><Icon name="chevron" />{to ? <Link to={to}>{label}</Link> : <span aria-current="page">{label}</span>}</Fragment>
-            ))}
-          </nav>
-        )}
-        <h1 className="page-title">{title}</h1>
+        {crumbs && <Breadcrumb crumbs={crumbs} />}
+        {title && <h1 className="page-title">{title}</h1>}
         {desc && <p className="page-desc">{desc}</p>}
         {children}
       </div>

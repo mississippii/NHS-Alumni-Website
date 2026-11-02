@@ -825,7 +825,8 @@ button { font: inherit; color: inherit; }
   border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); color: #F4F2E9;
   font: 400 clamp(1.8rem, 6vw, 3.2rem)/1 var(--f-display); background: rgb(0 0 0 / .18); backdrop-filter: blur(2px);
 }
-.page-header .stories-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.page-header .stories-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.stories-head .breadcrumb { flex-basis: 100%; }
 .stories-head .page-title { margin: 0; }
 .story-tag { font-size: var(--t-xs); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-text); }
 .story-by { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2); }
@@ -888,6 +889,13 @@ button { font: inherit; color: inherit; }
 .share-row .field { flex: 1 1 150px; }
 .share-photo { flex: none; gap: var(--s-2); }
 .share-photo .story-thumb { width: 40px; height: 40px; }
+.help-form { display: grid; gap: var(--s-5); padding-block: var(--s-4); }
+.help-row { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--s-3); }
+/* label sits on the box's top border */
+.outline-field { position: relative; display: block; }
+.outline-field > span { position: absolute; top: 0; left: 10px; transform: translateY(-50%); padding: 0 6px; line-height: 1;
+  font-size: var(--t-xs); font-weight: 600; color: var(--text-2); background: linear-gradient(var(--bg) 50%, var(--surface) 50%); pointer-events: none; }
+.outline-field:focus-within > span { color: var(--brand-text); }
 
 .admin-who { display: flex; align-items: center; gap: var(--s-2); margin: 0; font-size: var(--t-sm); }
 .admin-story { display: grid; grid-template-columns: auto 1fr; gap: var(--s-4); align-items: start; }
@@ -1228,3 +1236,7 @@ button { font: inherit; color: inherit; }
   box-shadow: 0 0 0 999px rgb(0 0 0 / .4); pointer-events: none; }
 .crop-zoom { width: min(300px, 100%); accent-color: var(--brand); }
 .crop-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); width: min(300px, 100%); }
+
+/* Typing on a phone: the keyboard is up, so the tab bar would only squeeze the page. Hide it (and its reserved space) while a text field has focus. */
+:root:has(:is(input:not([type=checkbox], [type=radio], [type=file], [type=range], [type=submit], [type=button]), textarea):focus) { --tab-h: 0px; }
+:root:has(:is(input:not([type=checkbox], [type=radio], [type=file], [type=range], [type=submit], [type=button]), textarea):focus) .tabbar { display: none; }

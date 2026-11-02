@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listStories } from '../../api/public.js';
 import { Icon } from '../../components/Icon.jsx';
-import { Empty } from '../../components/page.jsx';
+import { Breadcrumb, Empty } from '../../components/page.jsx';
 import { paragraphs } from '../../lib/format.js';
 import { useAsync, useTitle } from '../../lib/hooks.js';
 import Article, { previewCount } from './Article.jsx';
@@ -33,6 +33,7 @@ export default function Stories() {
     <>
       <header className="page-header">
         <div className="wrap stories-head">
+          <Breadcrumb crumbs={[[null, 'Stories']]} />
           <h1 className="page-title">Stories</h1>
           <Link className="btn btn-primary btn-sm" to="/stories/share"><Icon name="edit" />Share a story</Link>
         </div>
