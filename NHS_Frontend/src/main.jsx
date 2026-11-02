@@ -16,6 +16,7 @@ const ShareStory = lazy(() => import('./pages/stories/ShareStory.jsx'));
 const Profile = lazy(() => import('./pages/profile/Profile.jsx'));
 const UpdateProfile = lazy(() => import('./pages/profile-form/UpdateProfile.jsx'));
 const Admin = lazy(() => import('./pages/admin/Admin.jsx'));
+const Help = lazy(() => import('./pages/help/Help.jsx'));
 const ComingSoon = lazy(() => import('./pages/ComingSoon.jsx'));
 // Phone keyboards cover the bottom of the screen without shrinking the page: --kb is the covered height,
 // so bottom sheets and dialogs (index.css) can sit above the keyboard instead of behind it.
@@ -41,6 +42,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="alumni/:id" element={<Profile />} />
           <Route path="alumni/:id/update" element={<UpdateProfile />} />
           <Route path="join" element={<UpdateProfile />} />
+          <Route path="help" element={<Help />} />
           <Route path="admin/*" element={<Admin />} />
           <Route path="about" element={<ComingSoon title="About the Alumni Association" />} />
           <Route path="*" element={<ComingSoon title="Page not found" />} />

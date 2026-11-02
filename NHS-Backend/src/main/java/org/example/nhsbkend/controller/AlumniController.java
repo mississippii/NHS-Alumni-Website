@@ -178,7 +178,7 @@ public class AlumniController {
     /** Comments from joined members (not memorials), newest first. */
     @GetMapping("/comments")
     public List<Comment> comments() {
-        var list = repo.findTop30ByStatusAndDeceasedFalseAndBioIsNotNullOrderByUpdatedAtDescIdDesc(Alumnus.Status.VERIFIED).stream()
+        var list = repo.findByStatusAndDeceasedFalseAndBioIsNotNullOrderByUpdatedAtDescIdDesc(Alumnus.Status.VERIFIED).stream()
                 .filter(a -> !a.getBio().isBlank()).toList();
         var byComment = replyApi.under(list.stream().map(Alumnus::getId).toList());
         return list.stream()

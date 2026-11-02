@@ -24,6 +24,7 @@ const PATHS = {
   like: <path d="M7 10v11H4V10zm0 0 4-7a2 2 0 0 1 2.9 2L13 9h5.6a2 2 0 0 1 2 2.4l-1.5 7.6a2 2 0 0 1-2 1.6H7" />,
   bell: <><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></>,
   lock: <><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2" /></>,
+  help: <><path d="M4 15v-3a8 8 0 0 1 16 0v3" /><rect x="3" y="14" width="4" height="6" rx="1.5" /><rect x="17" y="14" width="4" height="6" rx="1.5" /><path d="M19 20c0 1.4-1.3 2-3 2h-3" /></>,
   inbox: <><path d="M3 13h5l1.5 3h5L16 13h5" /><path d="M5 5h14l2 8v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6z" /></>,
 };
 export const Icon = ({ name, className = 'ic' }) => (

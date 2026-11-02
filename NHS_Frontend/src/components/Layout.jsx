@@ -13,6 +13,7 @@ const NAV = [
   { to: '/alumni', label: 'Alumni', icon: 'users' },
   { to: '/stories', label: 'Stories', icon: 'book' },
   { to: '/events', label: 'Events', icon: 'calendar' },
+  { to: '/help', label: 'Help', icon: 'help' },
 ];
 // On /admin the same nav and tab bar switch to the admin sections.
 const ADMIN_NAV = [
@@ -95,6 +96,7 @@ export default function Layout() {
             <Link to="/stories">Stories</Link>
             <Link to="/events">Events</Link>
             <Link to="/about">About</Link>
+            <Link to="/help">Help</Link>
             <a className="footer-fb" href={SCHOOL.fbGroup} target="_blank" rel="noopener noreferrer" aria-label="Our official Facebook group" title="Facebook group"><FbLogo /></a>
             {visitCount > 0 && <span className="footer-count num">{visitCount.toLocaleString()}</span>}
           </nav>

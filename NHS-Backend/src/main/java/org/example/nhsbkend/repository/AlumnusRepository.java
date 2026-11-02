@@ -54,7 +54,7 @@ public interface AlumnusRepository extends JpaRepository<Alumnus, Long>, JpaSpec
     List<Alumnus> findByStatusOrderByIdAsc(Alumnus.Status status);
 
     /** Members' comments (the profile form's comment box), newest first. */
-    List<Alumnus> findTop30ByStatusAndDeceasedFalseAndBioIsNotNullOrderByUpdatedAtDescIdDesc(Alumnus.Status status);
+    List<Alumnus> findByStatusAndDeceasedFalseAndBioIsNotNullOrderByUpdatedAtDescIdDesc(Alumnus.Status status);
 
     /** +1 or -1 on a comment's likes (never below 0). A bulk update, so the comment keeps its place (updatedAt untouched). */
     @Modifying
@@ -68,10 +68,11 @@ public interface AlumnusRepository extends JpaRepository<Alumnus, Long>, JpaSpec
     List<Alumnus> findByFeaturedTrueAndStatusOrderByName(Alumnus.Status status);
 
     // Join requests waiting for an admin (PENDING) are not public: left out of every count.
-    @Query("select a.batch, count(a) from Alumnus a where a.status <> org.example.nhsbkend.entity.Alumnus.Status.PENDING and a.name is not null group by a.batch order by a.batch")
+    // Roll-only records (2022 on, no name yet) are counted: the batch really has them, the directory just hides them.
+    @Query("select a.batch, count(a.id) from Alumnus a where a.status <> org.example.nhsbkend.entity.Alumnus.Status.PENDING group by a.batch order by a.batch")
     List<Object[]> countPerBatch();
 
-    @Query("select a.batch, a.department, count(a) from Alumnus a where a.status <> org.example.nhsbkend.entity.Alumnus.Status.PENDING and a.name is not null group by a.batch, a.department")
+    @Query("select a.batch, a.department, count(a.id) from Alumnus a where a.status <> org.example.nhsbkend.entity.Alumnus.Status.PENDING group by a.batch, a.department")
     List<Object[]> countPerBatchAndDepartment();
 
     /** Active members per batch: verified profiles, memorials left out. */
