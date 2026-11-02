@@ -20,7 +20,7 @@ export default function Batches() {
 
   return (
     <>
-      <PageHeader crumbs={[[null, 'Alumni']]} title="Alumni">
+      <PageHeader crumbs={[[null, 'Alumni']]}>
         <div className="batch-search search-by">
           <label className="input-icon" htmlFor="by">
             <Icon name="search" />

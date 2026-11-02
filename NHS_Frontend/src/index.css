@@ -374,7 +374,6 @@ button { font: inherit; color: inherit; }
 .batch-search { max-width: 420px; width: 100%; justify-self: end; }
 /* Alumni page: the title and the search box share one line */
 .page-header:has(.batch-search) .wrap { grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s-4); align-items: center; }
-.page-header:has(.batch-search) .breadcrumb { grid-column: 1 / -1; }
 .search-by { display: flex; gap: var(--s-2); }
 .search-by > .input-icon { flex: 1; min-width: 0; }
 .page-header:has(.batch-search) .wrap { padding-block: var(--s-4); }
@@ -826,7 +825,6 @@ button { font: inherit; color: inherit; }
   font: 400 clamp(1.8rem, 6vw, 3.2rem)/1 var(--f-display); background: rgb(0 0 0 / .18); backdrop-filter: blur(2px);
 }
 .page-header .stories-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); }
-.stories-head .breadcrumb { flex-basis: 100%; }
 .stories-head .page-title { margin: 0; }
 .story-tag { font-size: var(--t-xs); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-text); }
 .story-by { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2); }
@@ -1240,3 +1238,7 @@ button { font: inherit; color: inherit; }
 /* Typing on a phone: the keyboard is up, so the tab bar would only squeeze the page. Hide it (and its reserved space) while a text field has focus. */
 :root:has(:is(input:not([type=checkbox], [type=radio], [type=file], [type=range], [type=submit], [type=button]), textarea):focus) { --tab-h: 0px; }
 :root:has(:is(input:not([type=checkbox], [type=radio], [type=file], [type=range], [type=submit], [type=button]), textarea):focus) .tabbar { display: none; }
+
+/* Hero headline: Fraunces 600 (sturdier over the photo), keywords too; only their colour differs. */
+.hero h1 { font-family: "Fraunces", Georgia, "Times New Roman", serif; font-weight: 600; line-height: 1.08; letter-spacing: 0; }
+.hero h1 .kw { font-family: inherit; font-weight: 600; font-style: normal; }

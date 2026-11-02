@@ -34,7 +34,6 @@ export default function Stories() {
       <header className="page-header">
         <div className="wrap stories-head">
           <Breadcrumb crumbs={[[null, 'Stories']]} />
-          <h1 className="page-title">Stories</h1>
           <Link className="btn btn-primary btn-sm" to="/stories/share"><Icon name="edit" />Share a story</Link>
         </div>
       </header>
